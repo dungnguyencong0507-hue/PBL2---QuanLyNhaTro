@@ -66,14 +66,19 @@ class Room
         bool RemoveTenant(Tenant*);
         int GetTenantCount();
         void SetRoomLeader(Tenant*);
+        
         void SetRentPrice(const ull&);
         ull GetRentPrice();
+        
         void SetServicePrice(const ull&);
         ull GetServicePrice();
+        
         void SetElectricMeter(const ull&);
         ull GetElectricMeter();
+        
         void SetWaterMeter(const ull&);
         ull GetWaterMeter();
+        
         void PayBill(const std::string& month, const std::string& paymentDate);
         ull GetBill(const std::string& month);
         ull GetDebt();
