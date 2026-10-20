@@ -9,10 +9,13 @@
 
 class Nhatro
 {
+    public:
+        static ull electricUnitPrice;           //gia dien theo don vi (VND/kWh)
+        static ull waterUnitPrice;              //gia nuoc theo don vi (VND/m3)
+        
     private:
         std::string address;
         std::string phone;
-        int numFloor = 0;
         std::vector<std::unique_ptr<Room>> rooms;
 
     public:
@@ -21,15 +24,13 @@ class Nhatro
 
         void SetAddress(const std::string& newAddress);
         void SetPhone(const std::string& newPhone);
-        void SetNumFloor(int newNumFloor);
 
         const std::string& GetAddress() const;
         const std::string& GetPhone() const;
-        int GetNumFloor() const;
         int GetNumRoom() const;
 
         Room* AddRoom(std::unique_ptr<Room> room);
         bool RemoveRoom(Room* room);
 
-        int AvailableRoom() const;
+        void AvailableRoom() const;
 };

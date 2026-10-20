@@ -11,7 +11,7 @@ enum Gender
 
 class Tenant
 {
-    private:
+    protected:
         std::string id;
         std::string name;
         Gender gender;
@@ -26,10 +26,11 @@ class Tenant
         ~Tenant();
 
         bool Rent(Room&);
-        bool StopHiring();
+        bool StopRenting();
         bool IsRenting();
         void SetTemporaryResidence(bool);
         void ReportDamage(const Damage&);
-        Room* GetRoom();
+        Room& GetRoom();
+        virtual void GetDiscount();
 
 };
