@@ -29,27 +29,27 @@ class Room
         Room(const std::string& ="100",const std::string& ="Phong 1",const int& =5,const int& =2);
         virtual ~Room();
 
-        void SetCapacity(int);
-        void SetPrepaid(const ull&);
+    void SetCapacity(int);
+    void SetPrepaid(const ull&);
 
-        const std::string& GetId() const;
-        const std::string& GetName() const;
-        int GetCapacity() const;
-        int GetFloor() const;
-        Tenant* GetRoomLeader() const;
+    const std::string& GetId() const;
+    const std::string& GetName() const;
+    int GetCapacity() const;
+    int GetFloor() const;
+    Tenant* GetRoomLeader() const;
 
-        void AddFurnishing(const Furnishing&);
+    void AddFurnishing(const Furnishing&);
 
-        bool IsRented() const;
-        bool IsFull() const;
-        bool AddTenant(Tenant*);
-        bool RemoveTenant(Tenant*);
-        void SetRoomLeader(Tenant*);
-        
-        virtual void SetRentPrice(const ull&) = 0;
-        void SetServicePrice(const ull&);
-        void SetElectricIndex(const ull&);
-        void SetWaterIndex(const ull&);
+    bool IsRented() const;
+    bool IsFull() const;
+    bool AddTenant(Tenant*);
+    bool RemoveTenant(Tenant*);
+    void SetRoomLeader(Tenant*);
+    
+    virtual void SetRentPrice(const ull&) = 0;
+    void SetServicePrice(const ull&);
+    void SetElectricIndex(const ull&);
+    void SetWaterIndex(const ull&);
 
         int GetTenantCount() const;
         virtual ull GetRentPrice() const = 0;
@@ -66,5 +66,5 @@ class Room
         
         void AddDamage(const Damage&);
 
-        friend std::ostream& operator<<(std::ostream&, const Room&);
+    friend std::ostream& operator<<(std::ostream&, const Room&);
 };

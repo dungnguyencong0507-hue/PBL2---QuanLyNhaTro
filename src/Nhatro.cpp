@@ -1,4 +1,7 @@
 #include <Nhatro.h>
+#include <header.h>
+#include <iomanip>
+#include <algorithm>
 using namespace std;
 
 Nhatro::Nhatro(const string& name, const string& address, const string& phone)
@@ -8,22 +11,27 @@ Nhatro::Nhatro(const string& name, const string& address, const string& phone)
 Nhatro::~Nhatro()
 {}
 
-void Nhatro::SetAddress(const std::string& newAddress)
+void Nhatro::SetAddress(const string& newAddress)
 {
     this->address = newAddress;
 }
 
-void Nhatro::SetPhone(const std::string& newPhone)
+void Nhatro::SetPhone(const string& newPhone)
 {
     this->phone = newPhone;
 }
 
-const std::string& Nhatro::GetAddress() const
+const string& Nhatro::GetName() const
+{
+    return this->name;
+}
+
+const string& Nhatro::GetAddress() const
 {
     return this->address;
 }
 
-const std::string& Nhatro::GetPhone() const
+const string& Nhatro::GetPhone() const
 {
     return this->phone;
 }
@@ -33,9 +41,12 @@ int Nhatro::GetNumRoom() const
     return this->rooms.size();
 }
 
-Room* Nhatro::AddRoom(std::unique_ptr<Room> newRoom)
+bool Nhatro::AddRoom(unique_ptr<Room> newRoom)
 {
+    if (newRoom == nullptr) return false;
+    if (find(this->rooms.begin(), this->rooms.end(), newRoom) != this->rooms.end()) return false;
     this->rooms.push_back(newRoom);
+    return true;
 }
 
 bool Nhatro::RemoveRoom(Room* targetRoom)
@@ -49,12 +60,70 @@ bool Nhatro::RemoveRoom(Room* targetRoom)
     return false;
 }
 
-void Nhatro::ShowAvailableRoom() const
+bool Nhatro::AddTenant(unique_ptr<Tenant> newTenant)
 {
+    if (newTenant == nullptr) return false;
+    if (find(this->tenants.begin(), this->tenants.end(), newTenant) != this->tenants.end()) return false;
+    this->tenants.push_back(newTenant);
+    return true;
+}
+
+void RoomTableInit()
+{
+    cout << left 
+        << setw(ROOM_TYPE_W) << "Loai phong"
+        << setw(ROOM_ID_W) << "Ma phong"
+        << setw(ROOM_NAME_W) << "Phong"
+        << setw(ROOM_CAP_W) << "So luong"
+        << setw(ROOM_FLOOR_W) << "Tang"
+        << setw(ROOM_PRICE_W) << "Gia thue"
+        << setw(ROOM_AVAILABLE_W) << "Trang thai" << endl;
+}
+
+void Nhatro::ShowRooms() const
+{
+    RoomTableInit();
+    for (auto it=this->rooms.begin(); it!=this->rooms.end(); it++){
+        cout << it->get();
+        cout << endl;
+    }
+}
+
+void Nhatro::ShowAvailableRooms() const
+{
+    RoomTableInit();
     for (auto it=this->rooms.begin(); it!=this->rooms.end(); it++){
         if (!(it->get()->IsFull())){
             cout << it->get();
             cout << endl;
         }
     }
+}
+
+void TenantTableInit()
+{
+    cout << left 
+        << setw(TENANT_ID_W) << "Ma khach"
+        << setw(TENANT_CCCD_W) << "CCCD"
+        << setw(TENANT_PHONE_W) << "SDT"
+        << setw(TENANT_GENDER_W) << "Gioi tinh"
+        << setw(TENANT_ROOM_W) << "Da thue phong"
+        << setw(TENANT_TMP_RSD_W) << "Dang ki tam tru" << endl;
+}
+
+void Nhatro::ShowTenants() const
+{
+    TenantTableInit();
+    for (auto it=this->tenants.begin(); it!=this->tenants.end(); it++){
+        cout << it->get();
+        cout << endl;
+    }
+}
+
+ostream& operator<<(ostream& o, const Nhatro& nhatro)
+{
+    o << "Thong tin " << nhatro.name << ":\n"
+        << "Dia chi: " << nhatro.address << endl
+        << "Lien he: " << nhatro.phone << endl;
+    return o;
 }
