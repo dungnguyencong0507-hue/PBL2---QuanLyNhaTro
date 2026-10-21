@@ -231,6 +231,6 @@ ostream& operator<<(ostream& o, const Room& room)
        << std::setw(ROOM_CAP_W) << room.capacity
        << std::setw(ROOM_FLOOR_W) << room.floor
        << std::setw(ROOM_PRICE_W) << room.rentPrice
-       << std::setw(ROOM_AVAILABLE_W) << (room.IsFull() ? "Full" : "Available");
+       << std::setw(ROOM_AVAILABLE_W) << (room.IsRented() ? (room.IsFull() ? "Full" : "Con") : "Trong");
     return o;
 }

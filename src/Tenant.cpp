@@ -38,11 +38,12 @@ void Tenant::SetTemporaryResidence(bool tmpRsd)
 
 ostream& operator<<(ostream& o, const Tenant& tenant)
 {
-    cout << left
+    o << left
         << setw(TENANT_ID_W) << tenant.id
         << setw(TENANT_CCCD_W) << tenant.cccdID
         << setw(TENANT_PHONE_W) << tenant.phone
-        << setw(TENANT_GENDER_W) << (tenant.gender == Male ? "Nam" : "Nữ")
-        << setw(TENANT_ROOM_W) << (tenant.IsRenting() ? tenant.room->GetName() : "Không")
-        << setw(TENANT_TMP_RSD_W) << (tenant.isTemporaryResidence ? "Rồi" : "Chưa");
+        << setw(TENANT_GENDER_W) << (tenant.gender == Male ? "Nam" : "Nu")
+        << setw(TENANT_ROOM_W) << (tenant.IsRenting() ? tenant.room->GetName() : "Khong")
+        << setw(TENANT_TMP_RSD_W) << (tenant.isTemporaryResidence ? "Roi" : "Chua");
+    return o;
 }
