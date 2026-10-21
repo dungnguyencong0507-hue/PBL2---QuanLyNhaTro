@@ -86,7 +86,7 @@ bool Room::AddTenant(Tenant* t)
     if(find(this->tenants.begin(),this->tenants.end(),t) != this->tenants.end()) return false;
 
     this->tenants.push_back(t);
-    if(this->roomLeader==nullptr) this->roomLeader =  t;
+    if(this->roomLeader==nullptr) this->roomLeader = move(t);
     
     return true;
 }
@@ -226,11 +226,11 @@ void Room::AddDamage(const Damage& d)
 ostream& operator<<(ostream& o, const Room& room)
 {
     o << std::left 
-       << std::setw(ROOMIDW) << room.id
-       << std::setw(ROOMNAMEW) << room.name
-       << std::setw(ROOMCAPW) << room.capacity
-       << std::setw(ROOMFLOORW) << room.floor
-       << std::setw(ROOMPRICEW) << room.rentPrice
-       << std::setw(ROOMAVAILABLEW) << (room.IsFull() ? "Full" : "Available");
+       << std::setw(ROOM_ID_W) << room.id
+       << std::setw(ROOM_NAME_W) << room.name
+       << std::setw(ROOM_CAP_W) << room.capacity
+       << std::setw(ROOM_FLOOR_W) << room.floor
+       << std::setw(ROOM_PRICE_W) << room.rentPrice
+       << std::setw(ROOM_AVAILABLE_W) << (room.IsFull() ? "Full" : "Available");
     return o;
 }

@@ -1,10 +1,6 @@
-#include <string.h>
-#include <iostream>
 #pragma once
-
+#include <iostream>
 #include <memory>
-#include <string>
-#include <vector>
 #include "Room.h"
 
 class Nhatro
@@ -14,21 +10,23 @@ private:
     std::string address;
     std::string phone;
     std::vector<std::unique_ptr<Room>> rooms;
+    std::vector<std::unique_ptr<Tenant*>> tenants;
 
 public:
-    Nhatro();
+    Nhatro(const std::string& = "Nha tro DHBK", const std::string& = "54 Nguyen Luong Bang", const std::string& = "0123456789");
     ~Nhatro();
 
-    void SetAddress(const std::string& newAddress);
-    void SetPhone(const std::string& newPhone);
+    void SetAddress(const std::string&);
+    void SetPhone(const std::string&);
 
     const std::string& GetAddress() const;
     const std::string& GetPhone() const;
     
     int GetNumRoom() const;
 
-    Room* AddRoom(std::unique_ptr<Room> room);
-    bool RemoveRoom(Room* room);
+    Room* AddRoom(std::unique_ptr<Room>);
+    bool RemoveRoom(Room*);
 
-    void AvailableRoom() const;
+    void ShowAvailableRoom() const;
+    friend std::ostream& operator<<(std::ostream&, const Nhatro&);
 };
