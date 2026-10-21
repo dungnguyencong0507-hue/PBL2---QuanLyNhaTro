@@ -10,9 +10,9 @@
 class Nhatro
 {
     private:
+        std::string name;
         std::string address;
         std::string phone;
-        int numFloor = 0;
         std::vector<std::unique_ptr<Room>> rooms;
 
     public:
@@ -25,7 +25,7 @@ class Nhatro
 
         const std::string& GetAddress() const;
         const std::string& GetPhone() const;
-        int GetNumFloor() const;
+       
         int GetNumRoom() const;
 
         Room* AddRoom(std::unique_ptr<Room> room);
