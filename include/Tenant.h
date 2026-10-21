@@ -16,21 +16,23 @@ class Tenant
         std::string name;
         Gender gender;
         std::string phone;
-        std::string idCard;
+        std::string cccdID;
         std::string hometown;
-        Room* room = nullptr;
-        bool isTemporaryResidence = false;
+        Room* room;
+        bool isTemporaryResidence;
 
     public:
-        Tenant();
+        Tenant(const std::string&, const std::string&, const Gender, const std::string&, const std::string&);
         virtual ~Tenant();
 
-        bool Rent(Room&);
-        bool StopRenting();
-        bool IsRenting();
+        bool IsRenting() const;
+
+        Room* GetRoom() const;
+        void SetRoom(Room*);
+
+        bool GetTemporaryResidence() const;
         void SetTemporaryResidence(bool);
-        void ReportDamage(const Damage&);
-        Room& GetRoom();
+        
         virtual void GetDiscount();
 
         friend std::ostream& operator<<(std::ostream&, const Tenant&);
