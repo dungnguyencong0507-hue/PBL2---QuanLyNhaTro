@@ -1,6 +1,7 @@
-
+#pragma once
 #include <string>
 using ull = unsigned long long;
+
 
 struct Month
 {

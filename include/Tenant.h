@@ -23,7 +23,7 @@ class Tenant
 
     public:
         Tenant();
-        ~Tenant();
+        virtual ~Tenant();
 
         bool Rent(Room&);
         bool StopRenting();

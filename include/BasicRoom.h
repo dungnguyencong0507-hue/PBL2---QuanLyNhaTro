@@ -1,3 +1,4 @@
+#pragma once
 #include <Room.h>
 
 class BasicRoom : public Room

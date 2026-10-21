@@ -1,3 +1,4 @@
+#pragma once
 #include <Tenant.h>
 
 class StudentTenant : public Tenant
