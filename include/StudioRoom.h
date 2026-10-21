@@ -10,8 +10,8 @@ public:
     ~StudioRoom();
 
     void SetRentPrice(const ull&) override;
-    ull GetRentPrice() override;
-    ull calcRent() override;
+    ull GetRentPrice() const override;
+    ull calcRent() const override;
 
     friend std::ostream& operator<<(std::ostream&, const StudioRoom&);
 };

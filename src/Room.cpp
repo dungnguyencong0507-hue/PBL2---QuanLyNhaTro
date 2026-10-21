@@ -86,7 +86,7 @@ bool Room::AddTenant(Tenant* t)
     if(find(this->tenants.begin(),this->tenants.end(),t) != this->tenants.end()) return false;
 
     this->tenants.push_back(t);
-    if(this->roomLeader==nullptr) this->roomLeader = move(t);
+    if(this->roomLeader==nullptr) this->roomLeader = t;
     
     return true;
 }
@@ -149,7 +149,7 @@ ull Room::GetWaterIndex() const
     return this->waterIndex.back();
 }
 
-bool Same_month(const Month& a,const Month& b)
+static bool Same_month(const Month& a,const Month& b)
 {
     return a.month == b.month && a.year == b.year;
 }
@@ -230,7 +230,7 @@ ostream& operator<<(ostream& o, const Room& room)
        << std::setw(ROOM_NAME_W) << room.name
        << std::setw(ROOM_CAP_W) << room.capacity
        << std::setw(ROOM_FLOOR_W) << room.floor
-       << std::setw(ROOM_PRICE_W) << room.rentPrice
-       << std::setw(ROOM_AVAILABLE_W) << (room.IsFull() ? "Full" : "Available");
+       << std::setw(ROOM_PRICE_W) << room.GetRentPrice()
+       << std::setw(ROOM_AVAILABLE_W) << (room.IsFull() ? "HET" : "CON");
     return o;
 }

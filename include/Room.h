@@ -15,7 +15,7 @@ class Room
         std::vector<Furnishing> furnishings;    //tien ich
         std::vector<Tenant*> tenants;           //danh sach nguoi o
         ull prepaid = 0;                        //tien coc (VND)
-        ull rentPrice = 0;                      //gia thue (VND)
+        // ull rentPrice = 0;                     //gia thue (VND)
         ull servicePrice = 0;                   //gia dich vu (VND)    
         std::vector<ull> electricIndex;         //chi so dien
         std::vector<ull> waterIndex;            //chi so nuoc
@@ -26,7 +26,7 @@ class Room
         static ull electricUnitPrice;           //gia dien theo don vi (VND/kWh)
         static ull waterUnitPrice;              //gia nuoc theo don vi (VND/m3)
     public:
-        Room(const std::string& ="100",const std::string& ="Nha tro",const int& =5,const int& =2);
+        Room(const std::string& ="100",const std::string& ="Phong 1",const int& =5,const int& =2);
         virtual ~Room();
 
         void SetCapacity(int);
@@ -52,7 +52,7 @@ class Room
         void SetWaterIndex(const ull&);
 
         int GetTenantCount() const;
-        virtual ull GetRentPrice() = 0;
+        virtual ull GetRentPrice() const = 0;
         ull GetServicePrice() const;
         ull GetElectricIndex() const;
         ull GetWaterIndex() const;
@@ -62,7 +62,7 @@ class Room
         
         bool CreateBill(const Month&);
         void PayBill(const Month& month, const Date& paymentDate);
-        virtual ull calcRent() = 0;
+        virtual ull calcRent() const = 0;
         
         void AddDamage(const Damage&);
 
