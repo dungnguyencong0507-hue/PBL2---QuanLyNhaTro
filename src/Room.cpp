@@ -5,7 +5,8 @@
 using namespace std;
 ull Room::electricUnitPrice = 3500;
 ull Room::waterUnitPrice = 8000;
-
+ull Room::internetCost = 50000;
+ull Room::trashCost = 15000;
 
 Room::Room(const string& id,const string& name,const int& capacity,const int& floor) 
     : id(id), name(name) , capacity(capacity) , floor(floor)
@@ -122,12 +123,13 @@ void Room::SetRoomLeader(Tenant* t)
 }
 
 
-void Room::SetElectricIndex(const ull& e)
+bool Room::SetElectricIndex(const ull& e)
 {
     if(!this->electricIndex.empty() && e < this->electricIndex.back())
-        return;
+        return false;
     
     this->electricIndex.push_back(e);
+    return true;
 }
 ull Room::GetElectricIndex() const
 {
@@ -135,12 +137,13 @@ ull Room::GetElectricIndex() const
 
     return this->electricIndex.back();
 }
-void Room::SetWaterIndex(const ull& w)
+bool Room::SetWaterIndex(const ull& w)
 {
     if(!this->waterIndex.empty() && w < this->waterIndex.back())
-        return;
+        return false;
     
     this->waterIndex.push_back(w);
+    return true;
 }
 ull Room::GetWaterIndex() const
 {
@@ -184,8 +187,8 @@ bool Room::CreateBill(const Month& month)
         bill.waterCost = this->waterIndex[0] * waterUnitPrice;
     }
 
-    bill.totalCost = bill.rentCost + bill.serviceCost + bill.trashCost + bill.electricCost 
-                    + bill.waterCost  + bill.internetCost + bill.damageCost;
+    bill.totalCost = bill.rentCost + bill.serviceCost + Room::trashCost + bill.electricCost 
+                    + bill.waterCost  + Room::internetCost + bill.damageCost;
     
     this->monthlyBills.push_back(bill);
     return true;
@@ -227,6 +230,7 @@ ostream& operator<<(ostream& o, const Room& room)
 {
     o << std::left 
        << std::setw(ROOM_ID_W) << room.id
+       << std::setw(ROOM_TYPE_W) << room.GetRoomType() 
        << std::setw(ROOM_NAME_W) << room.name
        << std::setw(ROOM_CAP_W) << room.capacity
        << std::setw(ROOM_FLOOR_W) << room.floor

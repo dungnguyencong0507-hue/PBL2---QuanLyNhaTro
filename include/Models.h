@@ -22,8 +22,6 @@ struct MonthlyBill
     ull electricCost;
     ull waterCost;
     ull serviceCost;
-    ull internetCost;
-    ull trashCost;
     ull damageCost;
     ull totalCost;
     bool isPaid;

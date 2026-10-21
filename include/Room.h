@@ -25,6 +25,8 @@ class Room
     public:
         static ull electricUnitPrice;           //gia dien theo don vi (VND/kWh)
         static ull waterUnitPrice;              //gia nuoc theo don vi (VND/m3)
+        static ull internetCost;                //gia internet
+        static ull trashCost;                   //tien thu rac
     public:
         Room(const std::string& ="100",const std::string& ="Phong 1",const int& =5,const int& =2);
         virtual ~Room();
@@ -48,23 +50,24 @@ class Room
     
     virtual void SetRentPrice(const ull&) = 0;
     void SetServicePrice(const ull&);
-    void SetElectricIndex(const ull&);
-    void SetWaterIndex(const ull&);
+    bool SetElectricIndex(const ull&);
+    bool SetWaterIndex(const ull&);
 
-        int GetTenantCount() const;
-        virtual ull GetRentPrice() const = 0;
-        ull GetServicePrice() const;
-        ull GetElectricIndex() const;
-        ull GetWaterIndex() const;
-        ull GetDebt() const;
-        ull GetPrepaid() const;
-        ull GetBill(const Month& month);
-        
-        bool CreateBill(const Month&);
-        void PayBill(const Month& month, const Date& paymentDate);
-        virtual ull calcRent() const = 0;
-        
-        void AddDamage(const Damage&);
+    int GetTenantCount() const;
+    virtual ull GetRentPrice() const = 0;
+    ull GetServicePrice() const;
+    ull GetElectricIndex() const;
+    ull GetWaterIndex() const;
+    ull GetDebt() const;
+    ull GetPrepaid() const;
+    ull GetBill(const Month& month);
+    virtual std::string GetRoomType() const = 0;
+    
+    bool CreateBill(const Month&);
+    void PayBill(const Month& month, const Date& paymentDate);
+    virtual ull calcRent() const = 0;
+    
+    void AddDamage(const Damage&);
 
     friend std::ostream& operator<<(std::ostream&, const Room&);
 };
