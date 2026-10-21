@@ -12,4 +12,6 @@ public:
     void SetRentPrice(const ull&) override;
     ull GetRentPrice() override;
     ull calcRent() override;
+
+    friend std::ostream& operator<<(std::ostream&, const VipRoom&);
 };

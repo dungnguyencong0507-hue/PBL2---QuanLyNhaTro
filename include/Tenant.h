@@ -33,4 +33,5 @@ class Tenant
         Room& GetRoom();
         virtual void GetDiscount();
 
+        friend std::ostream& operator<<(std::ostream&, const Tenant&);
 };
