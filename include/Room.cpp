@@ -163,15 +163,23 @@ bool Room::CreateBill(const Month& month)
     bill.serviceCost = servicePrice;
 
     int n = this -> electricIndex.size();
-    if(n > 2)
+    if(n >= 2)
     {
         bill.electricCost = (this->electricIndex[n-1] - this->electricIndex[n-2])*electricUnitPrice;
     }
+    else if (n == 1)
+    {
+        bill.electricCost = this->electricIndex[0] * electricUnitPrice;
+    }
 
     int m = this->waterIndex.size();
-    if(m > 2)
+    if(m >= 2)
     {
-        bill.waterCost = (this->waterIndex[n-1] - this->waterIndex[n-1])*waterUnitPrice;
+        bill.waterCost = (this->waterIndex[m-1] - this->waterIndex[m-2])*waterUnitPrice;
+    }
+    else if (m == 1)
+    {
+        bill.waterCost = this->waterIndex[0] * waterUnitPrice;
     }
 
     bill.totalCost = bill.rentCost + bill.serviceCost + bill.trashCost + bill.electricCost 
@@ -205,7 +213,7 @@ ull Room::GetDebt() const
     ull debt = 0;
     for(const auto& b : monthlyBills)
     {
-        if(!b.isPaid) debt = b.totalCost;  
+        if(!b.isPaid) debt += b.totalCost;  
     }
     return debt;
 }
@@ -213,3 +221,4 @@ void Room::AddDamage(const Damage& d)
 {
     this->damages.push_back(d);
 }
+// ostream Room::operator<<(ostream& o, const )
