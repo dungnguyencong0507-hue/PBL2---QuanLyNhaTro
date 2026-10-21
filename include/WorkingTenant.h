@@ -11,4 +11,6 @@ public:
     ~WorkingTenant();
 
     void GetDiscount() override;
+
+    friend std::ostream& operator<<(std::ostream&, const WorkingTenant&);
 };
