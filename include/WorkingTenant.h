@@ -4,7 +4,7 @@
 class WorkingTenant : public Tenant
 {
 private:
-    // std::string numberID;
+    std::string empID;
     std::string company;
 public:
     WorkingTenant(/* args */);
