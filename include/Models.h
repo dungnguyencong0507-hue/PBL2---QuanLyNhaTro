@@ -5,13 +5,13 @@ using ull = unsigned long long;
 
 struct Month
 {
-    __int8 month;
+    int month;
     int year;
 };
 
 struct Date : public Month
 {
-    __int8 day;
+    int day;
 };
 
 struct MonthlyBill
