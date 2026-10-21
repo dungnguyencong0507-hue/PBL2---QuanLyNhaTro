@@ -1,5 +1,7 @@
 #include "Room.h"
 #include <algorithm>
+#include "header.h"
+#include <iomanip>
 using namespace std;
 ull Room::electricUnitPrice = 3500;
 ull Room::waterUnitPrice = 8000;
@@ -221,4 +223,14 @@ void Room::AddDamage(const Damage& d)
 {
     this->damages.push_back(d);
 }
-// ostream Room::operator<<(ostream& o, const )
+ostream& operator<<(ostream& o, const Room& room)
+{
+    o << std::left 
+       << std::setw(ROOMIDW) << room.id
+       << std::setw(ROOMNAMEW) << room.name
+       << std::setw(ROOMCAPW) << room.capacity
+       << std::setw(ROOMFLOORW) << room.floor
+       << std::setw(ROOMPRICEW) << room.rentPrice
+       << std::setw(ROOMAVAILABLEW) << (room.IsFull() ? "Full" : "Available");
+    return o;
+}
