@@ -19,10 +19,17 @@ struct MonthlyBill
     Month month;
     Date paymentDate;
     ull rentCost;
-    ull electricCost;
-    ull waterCost;
     ull serviceCost;
     ull damageCost;
+
+    ull oldElectricIndex;
+    ull newElectricIndex;
+    ull electricCost;
+
+    ull oldWaterIndex;
+    ull newWaterIndex;
+    ull waterCost;
+    
     ull totalCost;
     bool isPaid;
 };
@@ -41,4 +48,10 @@ struct Damage
     std::string description;
     std::string resolution;
     bool isResolved;
+};
+
+enum class RoomType{
+    Basic,
+    Vip,
+    Studio,
 };

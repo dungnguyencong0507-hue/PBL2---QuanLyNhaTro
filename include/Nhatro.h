@@ -3,6 +3,7 @@
 #include <memory>
 #include <Room.h>
 #include <Tenant.h>
+#include <Models.h>
 
 class Nhatro
 {
@@ -14,7 +15,7 @@ private:
     std::vector<std::unique_ptr<Tenant>> tenants;
 
 public:
-    Nhatro(const std::string& = "Nha tro DHBK", const std::string& = "54 Nguyen Luong Bang", const std::string& = "0123456789");
+    Nhatro(const std::string& ="Nha tro Aura", const std::string& ="54 Nguyen Luong Bang", const std::string& ="0123456789");
     ~Nhatro();
 
     void SetAddress(const std::string&);
@@ -23,14 +24,15 @@ public:
     const std::string& GetName() const;
     const std::string& GetAddress() const;
     const std::string& GetPhone() const;
-    
     int GetNumRoom() const;
+
     bool AddRoom(std::unique_ptr<Room>);
     bool RemoveRoom(Room*);
 
     bool AddTenant(std::unique_ptr<Tenant>);
 
     void ShowRooms() const;
+    void ShowRoomsOfType(RoomType) const;
     void ShowTenants() const;
     void ShowAvailableRooms() const;
     friend std::ostream& operator<<(std::ostream&, const Nhatro&);

@@ -1,6 +1,6 @@
-#include "Room.h"
+#include <Room.h>
 #include <algorithm>
-#include "header.h"
+#include <header.h>
 #include <iomanip>
 using namespace std;
 ull Room::electricUnitPrice = 3500;
@@ -72,14 +72,6 @@ void Room::SetRentPrice(const ull& newPrice)
 {
     this->rentPrice = newPrice;
 }
-void Room::SetServicePrice(const ull& s)
-{
-    this->servicePrice=s;
-}
-ull Room::GetServicePrice() const
-{
-    return this->servicePrice;
-}
 
 
 void Room::AddFurnishing(const Furnishing& f)
@@ -130,34 +122,49 @@ void Room::SetRoomLeader(Tenant* t)
     }
 }
 
-
+void Room::SetElectricUnitPrice(const ull& p)
+{
+    Room::electricUnitPrice = p;
+}
+void Room::SetWaterUnitPrice(const ull& p)
+{
+    Room::waterUnitPrice = p;
+}
+void Room::SetInternetCost(const ull& p)
+{
+    Room::internetCost = p;
+}
+void Room::SetTrashCost(const ull& p)
+{
+    Room::trashCost = p;
+}
+void Room::SetServiceCost(const ull& p)
+{
+    Room::serviceCost = p;
+}
 bool Room::SetElectricIndex(const ull& e)
 {
-    if(!this->electricIndex.empty() && e < this->electricIndex.back())
-        return false;
+    if(e < this->newElectricIndex) return false;
     
-    this->electricIndex.push_back(e);
+    this->oldElectricIndex = this->newElectricIndex;
+    this->newElectricIndex = e;
     return true;
 }
 ull Room::GetElectricIndex() const
 {
-    if(this->electricIndex.empty()) return 0;
-
-    return this->electricIndex.back();
+    return this->newElectricIndex;
 }
 bool Room::SetWaterIndex(const ull& w)
 {
-    if(!this->waterIndex.empty() && w < this->waterIndex.back())
-        return false;
+    if(w < this->newElectricIndex) return false;
     
-    this->waterIndex.push_back(w);
+    this->oldWaterIndex = this->newWaterIndex;
+    this->newWaterIndex = w;
     return true;
 }
 ull Room::GetWaterIndex() const
 {
-    if(this->waterIndex.empty()) return 0;
-
-    return this->waterIndex.back();
+    return this->newWaterIndex;
 }
 
 static bool Same_month(const Month& a,const Month& b)
@@ -173,47 +180,41 @@ bool Room::CreateBill(const Month& month)
     MonthlyBill bill{};
     bill.month = month;
     bill.rentCost = this->calcRent();
-    bill.serviceCost = servicePrice;
+    int n = this->GetTenantCount();
+    bill.serviceCost = Room::serviceCost * n + Room::trashCost * n + Room::internetCost;
 
-    int n = this -> electricIndex.size();
-    if(n >= 2)
-    {
-        bill.electricCost = (this->electricIndex[n-1] - this->electricIndex[n-2])*electricUnitPrice;
-    }
-    else if (n == 1)
-    {
-        bill.electricCost = this->electricIndex[0] * electricUnitPrice;
-    }
+    bill.damageCost = 0;
+    for(const auto& d : this->damages)
+        if(Same_month(Month{d.date.month, d.date.year}, month)) bill.damageCost += d.furnishing->price;
 
-    int m = this->waterIndex.size();
-    if(m >= 2)
-    {
-        bill.waterCost = (this->waterIndex[m-1] - this->waterIndex[m-2])*waterUnitPrice;
-    }
-    else if (m == 1)
-    {
-        bill.waterCost = this->waterIndex[0] * waterUnitPrice;
-    }
+    bill.oldElectricIndex = this->oldElectricIndex;
+    bill.newElectricIndex = this->newElectricIndex;
+    bill.electricCost = (bill.newElectricIndex - bill.oldElectricIndex) * Room::electricUnitPrice;
 
-    bill.totalCost = bill.rentCost + bill.serviceCost + Room::trashCost + bill.electricCost 
-                    + bill.waterCost  + Room::internetCost + bill.damageCost;
+    bill.oldWaterIndex = this->oldWaterIndex;
+    bill.newWaterIndex = this->newWaterIndex;
+    bill.waterCost = (bill.newWaterIndex - bill.oldWaterIndex) * Room::waterUnitPrice;
+
+    bill.totalCost = bill.rentCost + bill.serviceCost + bill.electricCost 
+                    + bill.waterCost + bill.damageCost;
     
+    bill.isPaid = false;
     this->monthlyBills.push_back(bill);
     return true;
 }
-ull Room::GetBill(const Month& m)
+MonthlyBill* Room::GetBill(const Month& m)
 {
-    for(const auto& b : monthlyBills)
-        if(Same_month(b.month,m))
-            return b.totalCost;
-            
-    return 0;
+    for(auto& b : monthlyBills)
+        if(Same_month(b.month, m))
+            return &b;
+
+    return nullptr;
 }
 void Room::PayBill(const Month& month, const Date& paymentDate)
 {
     for(auto& b : this->monthlyBills)
     {
-        if(Same_month(b.month,month)) 
+        if(Same_month(b.month,month) && !b.isPaid) 
         {
             b.isPaid = true;
             b.paymentDate = paymentDate;

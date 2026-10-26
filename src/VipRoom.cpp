@@ -14,6 +14,10 @@ std::string VipRoom::GetRoomType() const
 {
     return "Vip";
 }
+RoomType VipRoom::Type() const
+{
+    return RoomType::Vip;
+}
 ull VipRoom::calcRent() const
 {
     if (this->GetTenantCount() == 1) return rentPrice;

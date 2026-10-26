@@ -14,6 +14,10 @@ std::string StudioRoom::GetRoomType() const
 {
     return "Studio";
 }
+RoomType StudioRoom::Type() const
+{
+    return RoomType::Studio;
+}
 
 ull StudioRoom::calcRent() const
 {

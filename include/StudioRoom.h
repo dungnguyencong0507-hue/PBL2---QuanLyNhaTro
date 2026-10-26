@@ -11,6 +11,7 @@ public:
 
     ull calcRent() const override;
     std::string GetRoomType() const override;
+    RoomType Type() const override;
 
     friend std::ostream& operator<<(std::ostream&, const StudioRoom&);
 };

@@ -14,6 +14,10 @@ std::string BasicRoom::GetRoomType() const
 {
     return "Basic";
 }
+RoomType BasicRoom::Type() const
+{
+    return RoomType::Basic;
+}
 ull BasicRoom::calcRent() const
 {
     if (this->GetTenantCount() == 1) return rentPrice;

@@ -51,6 +51,7 @@ bool Nhatro::AddRoom(unique_ptr<Room> newRoom)
 
 bool Nhatro::RemoveRoom(Room* targetRoom)
 {
+    if (targetRoom->GetTenantCount() > 0) return false;
     for (auto it=this->rooms.begin(); it!=this->rooms.end(); it++){
         if (it->get() == targetRoom){
             this->rooms.erase(it);
@@ -84,6 +85,16 @@ void Nhatro::ShowRooms() const
 {
     RoomTableInit();
     for (auto it=this->rooms.begin(); it!=this->rooms.end(); it++){
+        cout << it->get();
+        cout << endl;
+    }
+}
+
+void Nhatro::ShowRoomsOfType(RoomType rt) const
+{
+    RoomTableInit();
+    for (auto it=this->rooms.begin(); it!=this->rooms.end(); it++)
+    if (it->get()->Type() == rt){
         cout << it->get();
         cout << endl;
     }
