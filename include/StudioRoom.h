@@ -9,8 +9,6 @@ public:
     StudioRoom(const std::string& id = "102", const std::string& name = "Phong 2", const int& capacity = 5, const int& floor = 1);
     ~StudioRoom();
 
-    void SetRentPrice(const ull&) override;
-    ull GetRentPrice() const override;
     ull calcRent() const override;
     std::string GetRoomType() const override;
 

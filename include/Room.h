@@ -11,11 +11,11 @@ class Room
         std::string name;                       //ten phong
         Tenant* roomLeader= nullptr;            //nguoi dai dien
         int capacity ;                          //so luong 
-        int floor ;                              //tang
+        int floor ;                             //tang
         std::vector<Furnishing> furnishings;    //tien ich
         std::vector<Tenant*> tenants;           //danh sach nguoi o
         ull prepaid = 0;                        //tien coc (VND)
-        // ull rentPrice = 0;                     //gia thue (VND)
+        ull rentPrice = 0;                      //gia thue (VND)
         ull servicePrice = 0;                   //gia dich vu (VND)    
         std::vector<ull> electricIndex;         //chi so dien
         std::vector<ull> waterIndex;            //chi so nuoc
@@ -28,7 +28,7 @@ class Room
         static ull internetCost;                //gia internet
         static ull trashCost;                   //tien thu rac
     public:
-        Room(const std::string& ="100",const std::string& ="Phong 1",const int& =5,const int& =2);
+        Room(const std::string& ="100",const std::string& ="Phong 1",int=2,int=1);
         virtual ~Room();
 
     void SetCapacity(int);
@@ -48,13 +48,13 @@ class Room
     bool RemoveTenant(Tenant*);
     void SetRoomLeader(Tenant*);
     
-    virtual void SetRentPrice(const ull&) = 0;
+    void SetRentPrice(const ull&);
     void SetServicePrice(const ull&);
     bool SetElectricIndex(const ull&);
     bool SetWaterIndex(const ull&);
 
     int GetTenantCount() const;
-    virtual ull GetRentPrice() const = 0;
+    ull GetRentPrice() const;
     ull GetServicePrice() const;
     ull GetElectricIndex() const;
     ull GetWaterIndex() const;

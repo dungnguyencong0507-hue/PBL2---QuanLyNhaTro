@@ -8,7 +8,7 @@ ull Room::waterUnitPrice = 8000;
 ull Room::internetCost = 50000;
 ull Room::trashCost = 15000;
 
-Room::Room(const string& id,const string& name,const int& capacity,const int& floor) 
+Room::Room(const string& id,const string& name,int capacity,int floor) 
     : id(id), name(name) , capacity(capacity) , floor(floor)
 {} 
 Room::~Room(){}
@@ -64,6 +64,14 @@ ull Room::GetPrepaid() const
 {
     return this->prepaid;
 }
+ull Room::GetRentPrice()  const
+{
+    return this->rentPrice;
+}
+void Room::SetRentPrice(const ull& newPrice)
+{
+    this->rentPrice = newPrice;
+}
 void Room::SetServicePrice(const ull& s)
 {
     this->servicePrice=s;
@@ -72,12 +80,12 @@ ull Room::GetServicePrice() const
 {
     return this->servicePrice;
 }
+
+
 void Room::AddFurnishing(const Furnishing& f)
 {
     this->furnishings.push_back(f);
 }
-
-
 bool Room::AddTenant(Tenant* t)
 {
     if(t==nullptr) return false;

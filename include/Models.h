@@ -23,6 +23,7 @@ struct MonthlyBill
     ull waterCost;
     ull serviceCost;
     ull damageCost;
+    float discount;
     ull totalCost;
     bool isPaid;
 };
