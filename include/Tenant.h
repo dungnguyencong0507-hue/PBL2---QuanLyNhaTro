@@ -22,7 +22,7 @@ protected:
     bool isTemporaryResidence;
 
 public:
-    Tenant(const std::string&, const std::string&, const Gender, const std::string&, const std::string&);
+    Tenant(const std::string&, const std::string&, const std::string&, const Gender, const std::string&, const std::string&);
     virtual ~Tenant();
 
     bool IsRenting() const;

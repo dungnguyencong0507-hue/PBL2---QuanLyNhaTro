@@ -14,14 +14,15 @@ std::string BasicRoom::GetRoomType() const
 {
     return "Basic";
 }
+ull BasicRoom::calcRent() const
+{
+    // if(this->GetTenantCount() == 0) return 0;
+    if (this->GetTenantCount() == 1) return rentPrice;
+    return ull((double) rentPrice * (1 + 0.1 * (this->GetTenantCount() - 1))); 
+}
 RoomType BasicRoom::Type() const
 {
     return RoomType::Basic;
-}
-ull BasicRoom::calcRent() const
-{
-    if (this->GetTenantCount() == 1) return rentPrice;
-    return ull((double) rentPrice * (1 + 0.1 * (this->GetTenantCount() - 1))); 
 }
 ostream& operator<<(ostream& o, const BasicRoom& room)
 {

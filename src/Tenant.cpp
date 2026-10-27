@@ -3,9 +3,10 @@
 #include <header.h>
 using namespace std;
 
-Tenant::Tenant(const string& name, const string& phone, const Gender gend, const string& cccd, const string& home)
+Tenant::Tenant(const string& id, const string& name, const string& phone, const Gender gend, const string& cccd, const string& home)
     : name(name), phone(phone), gender(gend), cccdID(cccd), hometown(home)
 {
+    this->id = id;
     this->room = nullptr;
     this->isTemporaryResidence = false;
 }  

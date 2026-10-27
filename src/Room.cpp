@@ -7,6 +7,7 @@ ull Room::electricUnitPrice = 3500;
 ull Room::waterUnitPrice = 8000;
 ull Room::internetCost = 50000;
 ull Room::trashCost = 15000;
+ull Room::serviceCost = 50000;
 
 Room::Room(const string& id,const string& name,int capacity,int floor) 
     : id(id), name(name) , capacity(capacity) , floor(floor)
@@ -80,7 +81,7 @@ void Room::AddFurnishing(const Furnishing& f)
 }
 bool Room::AddTenant(Tenant* t)
 {
-    if(t==nullptr) return false;
+    if(t == nullptr) return false;
 
     if(this->IsFull()) return false;
 
@@ -156,7 +157,7 @@ ull Room::GetElectricIndex() const
 }
 bool Room::SetWaterIndex(const ull& w)
 {
-    if(w < this->newElectricIndex) return false;
+    if(w < this->newWaterIndex) return false;
     
     this->oldWaterIndex = this->newWaterIndex;
     this->newWaterIndex = w;
