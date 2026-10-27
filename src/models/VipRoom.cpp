@@ -14,14 +14,15 @@ std::string VipRoom::GetRoomType() const
 {
     return "Vip";
 }
+ull VipRoom::calcRent() const
+{
+    // if(this->GetTenantCount() == 0) return 0;
+    if (this->GetTenantCount() == 1) return rentPrice;
+    return ull((double) rentPrice * (1 + 0.1 * (this->GetTenantCount() - 1))); 
+}
 RoomType VipRoom::Type() const
 {
     return RoomType::Vip;
-}
-ull VipRoom::calcRent() const
-{
-    if (this->GetTenantCount() == 1) return rentPrice;
-    return ull((double) rentPrice * (1 + 0.1 * (this->GetTenantCount() - 1))); 
 }
 ostream& operator<<(ostream& o, const VipRoom& room)
 {

@@ -5,7 +5,11 @@ ull Room::electricUnitPrice = 3500;
 ull Room::waterUnitPrice = 8000;
 ull Room::internetCost = 50000;
 ull Room::trashCost = 15000;
+<<<<<<< HEAD:src/models/Room.cpp
 ull Room::serviceCost = 0;
+=======
+ull Room::serviceCost = 50000;
+>>>>>>> c96bc66665472ff20cc7521883baa7affaea3937:src/Room.cpp
 
 Room::Room(const string& id,const string& name,int capacity,int floor) 
     : id(id), name(name) , capacity(capacity) , floor(floor)
@@ -107,7 +111,7 @@ void Room::AddFurnishing(const Furnishing& f)
 }
 bool Room::AddTenant(Tenant* t)
 {
-    if(t==nullptr) return false;
+    if(t == nullptr) return false;
 
     if(this->IsFull()) return false;
 

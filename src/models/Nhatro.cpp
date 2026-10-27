@@ -73,10 +73,11 @@ bool Nhatro::RemoveRoom(Room* targetRoom)
     return false;
 }
 
-bool Nhatro::AddTenant(unique_ptr<Tenant> newTenant)
+bool Nhatro::AddTenant(unique_ptr<Tenant> newTenant, Room* choiceRoom)
 {
-    if (!newTenant) return false;
-    this->tenants.push_back(move(newTenant));
+    if (newTenant == nullptr) return false;
+    if (find(this->tenants.begin(), this->tenants.end(), newTenant) != this->tenants.end()) return false;
+    this->tenants.push_back(newTenant);
     return true;
 }
 
