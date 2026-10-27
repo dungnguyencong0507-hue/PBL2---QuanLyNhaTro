@@ -22,15 +22,27 @@ protected:
     bool isTemporaryResidence;
 
 public:
-    Tenant(const std::string&, const std::string&, const Gender, const std::string&, const std::string&);
+    Tenant(const std::string&, const std::string&, const std::string&, const Gender, const std::string&, const std::string&);
     virtual ~Tenant();
 
     bool IsRenting() const;
 
+    std::string GetId() const;
+    std::string GetName() const;
+    std::string GetPhone() const;
+    std::string GetCCCD() const;
+    std::string GetHometown() const;
+    Gender GetGender() const;
     Room* GetRoom() const;
-    void SetRoom(Room*);
-
     bool GetTemporaryResidence() const;
+    
+    void SetName(const std::string&);
+    void SetId(const std::string&);
+    void SetPhone(const std::string&);
+    void SetCCCD(const std::string&);
+    void SetHometown(const std::string&);
+    void SetGender(const Gender&);
+    void SetRoom(Room*);
     void SetTemporaryResidence(bool);
     
     virtual void GetDiscount();

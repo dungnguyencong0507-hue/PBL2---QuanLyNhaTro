@@ -1,6 +1,4 @@
 #include <Nhatro.h>
-#include <header.h>
-#include <iomanip>
 #include <algorithm>
 using namespace std;
 
@@ -41,11 +39,25 @@ int Nhatro::GetNumRoom() const
     return this->rooms.size();
 }
 
+int Nhatro::GetNumTenant() const
+{
+    return this->tenants.size();
+}
+
+Room* Nhatro::GetRoom(int i)
+{
+    return this->rooms.at(i).get();
+}
+
+Tenant* Nhatro::GetTenant(int i)
+{
+    return this->tenants.at(i).get();
+}
+
 bool Nhatro::AddRoom(unique_ptr<Room> newRoom)
 {
-    if (newRoom == nullptr) return false;
-    if (find(this->rooms.begin(), this->rooms.end(), newRoom) != this->rooms.end()) return false;
-    this->rooms.push_back(newRoom);
+    if (!newRoom) return false;
+    this->rooms.push_back(move(newRoom));
     return true;
 }
 
@@ -63,41 +75,30 @@ bool Nhatro::RemoveRoom(Room* targetRoom)
 
 bool Nhatro::AddTenant(unique_ptr<Tenant> newTenant)
 {
-    if (newTenant == nullptr) return false;
-    if (find(this->tenants.begin(), this->tenants.end(), newTenant) != this->tenants.end()) return false;
-    this->tenants.push_back(newTenant);
+    if (!newTenant) return false;
+    this->tenants.push_back(move(newTenant));
     return true;
-}
-
-void RoomTableInit()
-{
-    cout << left 
-        << setw(ROOM_TYPE_W) << "Loai phong"
-        << setw(ROOM_ID_W) << "Ma phong"
-        << setw(ROOM_NAME_W) << "Phong"
-        << setw(ROOM_CAP_W) << "So luong"
-        << setw(ROOM_FLOOR_W) << "Tang"
-        << setw(ROOM_PRICE_W) << "Gia thue"
-        << setw(ROOM_AVAILABLE_W) << "Trang thai" << endl;
 }
 
 void Nhatro::ShowRooms() const
 {
     RoomTableInit();
     for (auto it=this->rooms.begin(); it!=this->rooms.end(); it++){
-        cout << it->get();
+        cout << *it->get();
         cout << endl;
     }
+    RoomTableEnd();
 }
 
-void Nhatro::ShowRoomsOfType(RoomType rt) const
+void Nhatro::ShowRoomsByType(RoomType rt) const
 {
     RoomTableInit();
     for (auto it=this->rooms.begin(); it!=this->rooms.end(); it++)
     if (it->get()->Type() == rt){
-        cout << it->get();
+        cout << *it->get();
         cout << endl;
     }
+    RoomTableEnd();
 }
 
 void Nhatro::ShowAvailableRooms() const
@@ -105,30 +106,21 @@ void Nhatro::ShowAvailableRooms() const
     RoomTableInit();
     for (auto it=this->rooms.begin(); it!=this->rooms.end(); it++){
         if (!(it->get()->IsFull())){
-            cout << it->get();
+            cout << *it->get();
             cout << endl;
         }
     }
-}
-
-void TenantTableInit()
-{
-    cout << left 
-        << setw(TENANT_ID_W) << "Ma khach"
-        << setw(TENANT_CCCD_W) << "CCCD"
-        << setw(TENANT_PHONE_W) << "SDT"
-        << setw(TENANT_GENDER_W) << "Gioi tinh"
-        << setw(TENANT_ROOM_W) << "Da thue phong"
-        << setw(TENANT_TMP_RSD_W) << "Dang ki tam tru" << endl;
+    RoomTableEnd();
 }
 
 void Nhatro::ShowTenants() const
 {
     TenantTableInit();
     for (auto it=this->tenants.begin(); it!=this->tenants.end(); it++){
-        cout << it->get();
+        cout << *it->get();
         cout << endl;
     }
+    TenantTableEnd();
 }
 
 ostream& operator<<(ostream& o, const Nhatro& nhatro)
@@ -137,4 +129,20 @@ ostream& operator<<(ostream& o, const Nhatro& nhatro)
         << "Dia chi: " << nhatro.address << endl
         << "Lien he: " << nhatro.phone << endl;
     return o;
+}
+
+Room* Nhatro::FindRoom(const std::string& id)
+{
+    for (auto it=this->rooms.begin(); it!=this->rooms.end(); it++){
+        if (it->get()->GetId() == id) return it->get();
+    }
+    return nullptr;
+}
+    
+Tenant* Nhatro::FindTenant(const std::string& id)
+{
+    for (auto it=this->tenants.begin(); it!=this->tenants.end(); it++){
+        if (it->get()->GetId() == id) return it->get();
+    }
+    return nullptr;
 }

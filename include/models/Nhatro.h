@@ -1,5 +1,5 @@
 #pragma once
-#include <iostream>
+#include <header.h>
 #include <memory>
 #include <Room.h>
 #include <Tenant.h>
@@ -25,6 +25,9 @@ public:
     const std::string& GetAddress() const;
     const std::string& GetPhone() const;
     int GetNumRoom() const;
+    int GetNumTenant() const;
+    Room* GetRoom(int);
+    Tenant* GetTenant(int);
 
     bool AddRoom(std::unique_ptr<Room>);
     bool RemoveRoom(Room*);
@@ -32,8 +35,11 @@ public:
     bool AddTenant(std::unique_ptr<Tenant>);
 
     void ShowRooms() const;
-    void ShowRoomsOfType(RoomType) const;
+    void ShowRoomsByType(RoomType) const;
     void ShowTenants() const;
     void ShowAvailableRooms() const;
+
+    Room* FindRoom(const std::string&);
+    Tenant* FindTenant(const std::string&);
     friend std::ostream& operator<<(std::ostream&, const Nhatro&);
 };

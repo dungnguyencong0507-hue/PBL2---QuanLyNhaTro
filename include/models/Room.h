@@ -1,24 +1,31 @@
 #pragma once
-#include <iostream>
+#include <header.h>
 #include <vector>
 #include <Models.h>
 #include <string>
 class Tenant;
+
+enum RoomType{
+    Basic,
+    Vip,
+    Studio,
+};
+
 class Room
 {
     protected:
         std::string id;                         //ma phong
         std::string name;                       //ten phong
         Tenant* roomLeader= nullptr;            //nguoi dai dien
-        int capacity ;                          //so luong 
-        int floor ;                             //tang
+        int capacity;                           //so luong 
+        int floor;                              //tang
         std::vector<Furnishing> furnishings;    //tien ich
         std::vector<Tenant*> tenants;           //danh sach nguoi o
         ull prepaid = 0;                        //tien coc (VND)
         ull rentPrice;                          //gia thue (VND) 
-        ull oldElectricIndex;                   //chi so dien cu
+        ull oldElectricIndex = 0;               //chi so dien cu
         ull newElectricIndex = 0;               //chi so dien moi
-        ull oldWaterIndex;                      //chi so dien cu
+        ull oldWaterIndex = 0;                  //chi so nuoc cu
         ull newWaterIndex = 0;                  //chi so dien moi
         std::vector<MonthlyBill> monthlyBills;  //danh sach hoa don hang thang
         std::vector<Damage> damages;            //danh sach bao hong
@@ -34,6 +41,9 @@ class Room
         virtual ~Room();
 
     void SetCapacity(int);
+    void SetId(const std::string&);
+    void SetName(const std::string&);
+    void SetFloor(int);
     void SetPrepaid(const ull&);
 
     const std::string& GetId() const;
@@ -41,6 +51,10 @@ class Room
     int GetCapacity() const;
     int GetFloor() const;
     Tenant* GetRoomLeader() const;
+    const std::vector<Furnishing>& GetFurnishings() const;
+    const std::vector<Tenant*>& GetTenants() const;
+    const std::vector<MonthlyBill>& GetMonthlyBills() const;
+    const std::vector<Damage>& GetDamages() const;
 
     void AddFurnishing(const Furnishing&);
 
@@ -62,8 +76,10 @@ class Room
 
     int GetTenantCount() const;
     ull GetRentPrice() const;
-    ull GetElectricIndex() const;
-    ull GetWaterIndex() const;
+    ull GetOldElectricIndex() const;
+    ull GetNewElectricIndex() const;
+    ull GetOldWaterIndex() const;
+    ull GetNewWaterIndex() const;
     ull GetDebt() const;
     ull GetPrepaid() const;
     MonthlyBill* GetBill(const Month& month);
@@ -71,6 +87,7 @@ class Room
     virtual RoomType Type() const = 0;
     
     bool CreateBill(const Month&);
+    bool AddBill(const MonthlyBill&);
     void PayBill(const Month& month, const Date& paymentDate);
     virtual ull calcRent() const = 0;
     

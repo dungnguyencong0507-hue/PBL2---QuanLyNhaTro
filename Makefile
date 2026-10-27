@@ -1,24 +1,22 @@
 CXX = g++
-CPPFLAGS += -Iinclude
+CPPFLAGS += -Iinclude -Iinclude/models -Iinclude/manager
 CXXFLAGS ?= -std=c++17 -Wall -Wextra
 
-SOURCES := $(wildcard src.cpp)
-OBJECTS := $(patsubst src/%.cpp,build/%.o,$(SOURCES))
+TARGET := qlnt.exe
+SOURCES := $(wildcard src/*.cpp src/manager/*.cpp src/models/*.cpp)
+HEADERS := $(wildcard include/*.h include/manager/*.h include/models/*.h)
 
 .PHONY: all clean
 
-all: $(OBJECTS)
+all: $(TARGET)
 
-build:
-	mkdir build
-
-build/%.o: src/%.cpp | build
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+$(TARGET): $(SOURCES) $(HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(SOURCES) -o $@
 
 ifeq ($(OS),Windows_NT)
 clean:
-	if exist build\*.o del /Q build\*.o
+	cmd /c if exist $(TARGET) del /Q $(TARGET)
 else
 clean:
-	$(RM) $(OBJECTS)
+	rm -f $(TARGET)
 endif

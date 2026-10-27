@@ -49,9 +49,3 @@ struct Damage
     std::string resolution;
     bool isResolved;
 };
-
-enum class RoomType{
-    Basic,
-    Vip,
-    Studio,
-};
