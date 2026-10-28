@@ -43,10 +43,21 @@ bool HasDuplicateTenantId(Nhatro& nhatro, const string& id, const Tenant* except
     return false;
 }
 
+string GenerateTenantId(Nhatro& nhatro)
+{
+    for (ull candidate = 1; ; candidate++){
+        string number = to_string(candidate);
+        string id = "KH" + string(number.size() < 6 ? 6 - number.size() : 0, '0') + number;
+        if (!HasDuplicateTenantId(nhatro, id)) return id;
+        if (candidate == numeric_limits<ull>::max())
+            throw runtime_error("Khong the tao ma khach thue moi.");
+    }
+}
+
 bool ReadForm(const string& title, const vector<pair<string, string>>& fields,
     vector<string>& values)
 {
-    FormBox form(2, 1, 78, title);
+    FormBox form(2, 1, 78, 0.5, title);
     for (const auto& field : fields)
         form.AddField(field.first, field.second);
 
@@ -224,7 +235,6 @@ void AddTenant(Nhatro& nhatro)
 {
     vector<string> values;
     if (!ReadForm("THEM KHACH THUE", {
-        {"Ma khach", ""},
         {"Ho ten", ""},
         {"Gioi tinh (0 Nam, 1 Nu)", "0"},
         {"So dien thoai", ""},
@@ -235,25 +245,20 @@ void AddTenant(Nhatro& nhatro)
     }, values)) return;
 
     ull genderValue, temporaryResidence;
-    if (values[0].empty() || values[1].empty()
-        || !ParseUnsigned(values[2], genderValue) || genderValue > Female
-        || values[3].empty() || values[4].empty() || values[5].empty()
-        || !ParseUnsigned(values[7], temporaryResidence) || temporaryResidence > 1){
+    if (values[0].empty()
+        || !ParseUnsigned(values[1], genderValue) || genderValue > Female
+        || values[2].empty() || values[3].empty() || values[4].empty()
+        || !ParseUnsigned(values[6], temporaryResidence) || temporaryResidence > 1){
         cout << "Du lieu khong hop le. Khach thue chua duoc them.\n";
-        Pause();
-        return;
-    }
-    if (HasDuplicateTenantId(nhatro, values[0])){
-        cout << "Ma khach thue da ton tai.\n";
         Pause();
         return;
     }
 
     Room* room = nullptr;
-    if (!values[6].empty()){
-        room = nhatro.FindRoom(values[6]);
+    if (!values[5].empty()){
+        room = nhatro.FindRoom(values[5]);
         if (!room){
-            cout << "Khong tim thay phong co ma " << values[6] << ".\n";
+            cout << "Khong tim thay phong co ma " << values[5] << ".\n";
             Pause();
             return;
         }
@@ -264,9 +269,10 @@ void AddTenant(Nhatro& nhatro)
         }
     }
 
+    string tenantId = GenerateTenantId(nhatro);
     unique_ptr<Tenant> tenant = make_unique<Tenant>(
-        values[0], values[1], values[3], static_cast<Gender>(genderValue),
-        values[4], values[5]);
+        tenantId, values[0], values[2], static_cast<Gender>(genderValue),
+        values[3], values[4]);
     tenant->SetTemporaryResidence(temporaryResidence == 1);
     if (room){
         if (!room->AddTenant(tenant.get())){
@@ -285,7 +291,7 @@ void AddTenant(Nhatro& nhatro)
     }
 
     SaveTenantData(TENANT_DATA_FILE, nhatro);
-    cout << "Da them khach thue thanh cong.\n";
+    cout << "Da them khach thue thanh cong. Ma khach: " << tenantId << '\n';
     Pause();
 }
 

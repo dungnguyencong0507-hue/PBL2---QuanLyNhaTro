@@ -9,6 +9,7 @@
 #include <RoomManager.h>
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <limits>
 #include <stdexcept>
 using namespace std;
@@ -27,7 +28,7 @@ string ToLower(string value)
 bool ReadForm(const string& title, const vector<pair<string, string>>& fields,
     vector<string>& values)
 {
-    FormBox form(2, 1, 78, title);
+    FormBox form(2, 1, 78, 0.5, title);
     for (const auto& field : fields)
         form.AddField(field.first, field.second);
 
@@ -65,73 +66,82 @@ void Pause()
     cout << "\nNhan mot phim bat ky de tiep tuc...";
     char c;
     Console::Read(c);
+    //system("pause");
+}
+
+ostream& operator<<(ostream& o, const vector<Furnishing>& furn)
+{
+    o << border::TL
+        << string(F_ID_W, border::H) << border::DT
+        << string(F_NAME_W, border::H) << border::DT
+        << string(F_PRICE_W, border::H) << border::TR
+        << endl;
+    for (auto it : furn){
+        o << it << endl;
+    }
+    o << border::BL
+        << string(F_ID_W, border::H) << border::UT
+        << string(F_NAME_W, border::H) << border::UT
+        << string(F_PRICE_W, border::H) << border::BR
+        << endl;
+    return o;
+}
+
+ostream& operator<<(ostream& o, const vector<Damage>& damage)
+{
+    o << border::TL
+        << string(DAM_DATE_W, border::H) << border::DT
+        << string(DAM_FURN_W, border::H) << border::DT
+        << string(DAM_DESCRIPTION_W, border::H) << border::DT
+        << string(DAM_RESOLUTION_W, border::H) << border::TR
+        << endl;
+    for (int i = damage.size()-1; i>=0; i--){
+        o << damage[i] << endl;
+    }
+    o << border::BL
+        << string(DAM_DATE_W, border::H) << border::UT
+        << string(DAM_FURN_W, border::H) << border::UT
+        << string(DAM_DESCRIPTION_W, border::H) << border::UT
+        << string(DAM_RESOLUTION_W, border::H) << border::BR
+        << endl;
+    return o;
 }
 
 void PrintRoomDetails(const Room& room)
 {
-    cout << "\n========== CHI TIET PHONG ==========\n"
-        << "Ma phong: " << room.GetId() << '\n'
-        << "Ten phong: " << room.GetName() << '\n'
-        << "Loai phong: " << room.GetRoomType() << '\n'
-        << "Tang: " << room.GetFloor() << '\n'
-        << "Suc chua: " << room.GetTenantCount() << "/" << room.GetCapacity() << '\n'
-        << "Trang thai: " << (room.IsFull() ? "Da day" : "Con cho") << '\n'
-        << "Gia thue: " << room.GetRentPrice() << " VND\n"
-        << "Tien thue hien tai: " << room.calcRent() << " VND\n"
-        << "Tien coc: " << room.GetPrepaid() << " VND\n"
+    cout << "Ma phong   : " << room.GetId() << '\n'
+        << "Ten phong  : " << room.GetName() << '\n'
+        << "Loai phong : " << room.GetRoomType() << '\n'
+        << "Tang       : " << room.GetFloor() << '\n'
+        << "Suc chua   : " << room.GetTenantCount() << "/" << room.GetCapacity() << '\n'
+        << "Trang thai : " << (room.IsFull() ? "Da day" : "Con cho") << '\n'
+        << "Gia thue   : " << room.GetRentPrice() << " VND\n"
+        << "Gia thue   : " << room.calcRent() << " VND\n"
+        << "Tien coc   : " << room.GetPrepaid() << " VND\n"
         << "Chi so dien: " << room.GetOldElectricIndex() << " -> "
-        << room.GetNewElectricIndex() << '\n'
+            << room.GetNewElectricIndex() << '\n'
         << "Chi so nuoc: " << room.GetOldWaterIndex() << " -> "
-        << room.GetNewWaterIndex() << '\n'
-        << "Cong no: " << room.GetDebt() << " VND\n";
-
-    Tenant* leader = room.GetRoomLeader();
-    cout << "Nguoi dai dien: ";
-    if (leader) cout << leader->GetName() << " (" << leader->GetId() << ")\n";
-    else cout << "Chua co\n";
+            << room.GetNewWaterIndex() << '\n'
+        << "Tong no    : " << room.GetDebt() << " VND\n";
 
     cout << "\n--- Danh sach nguoi thue ---\n";
     if (room.GetTenants().empty()) cout << "Khong co\n";
-    for (Tenant* tenant : room.GetTenants()){
-        if (tenant)
-            cout << "- " << tenant->GetName() << " | Ma: " << tenant->GetId()
-                 << " | SDT: " << tenant->GetPhone() << '\n';
+    else {
+        TenantTableInit();
+        for (Tenant* tenant : room.GetTenants()){
+            if (tenant)
+                cout << tenant << '\n';
+        }
+        TenantTableEnd();
     }
 
     cout << "\n--- Tien nghi ---\n";
     if (room.GetFurnishings().empty()) cout << "Khong co\n";
-    for (const Furnishing& furnishing : room.GetFurnishings())
-        cout << "- " << furnishing.name << " | Ma: " << furnishing.id
-             << " | Gia tri: " << furnishing.price << " VND\n";
-
-    cout << "\n--- Hoa don hang thang ---\n";
-    if (room.GetMonthlyBills().empty()) cout << "Khong co\n";
-    for (const MonthlyBill& bill : room.GetMonthlyBills()){
-        cout << "- " << bill.month.month << "/" << bill.month.year
-             << " | Thue: " << bill.rentCost
-             << " | Dich vu: " << bill.serviceCost
-             << " | Dien: " << bill.electricCost
-             << " | Nuoc: " << bill.waterCost
-             << " | Hu hong: " << bill.damageCost
-             << " | Tong: " << bill.totalCost
-             << " | " << (bill.isPaid ? "Da thanh toan" : "Chua thanh toan");
-        if (bill.isPaid)
-            cout << " ngay " << bill.paymentDate.day << "/"
-                 << bill.paymentDate.month << "/" << bill.paymentDate.year;
-        cout << '\n';
-    }
+    else cout << room.GetFurnishings();
 
     cout << "\n--- Bao hong ---\n";
     if (room.GetDamages().empty()) cout << "Khong co\n";
-    for (const Damage& damage : room.GetDamages()){
-        cout << "- " << damage.date.day << "/" << damage.date.month << "/"
-             << damage.date.year << " | "
-             << (damage.furnishing ? damage.furnishing->name : "Khong ro vat dung")
-             << " | " << damage.description
-             << " | Xu ly: " << damage.resolution
-             << " | " << (damage.isResolved ? "Da xu ly" : "Chua xu ly") << '\n';
-    }
-    cout << "====================================\n";
+    else cout << room.GetDamages();
 }
 
 bool HasDuplicateRoomId(Nhatro& nhatro, const string& id, const Room* except = nullptr)
@@ -141,6 +151,104 @@ bool HasDuplicateRoomId(Nhatro& nhatro, const string& id, const Room* except = n
         if (room != except && room->GetId() == id) return true;
     }
     return false;
+}
+
+void DrawPanel(int x, int y, int width, int height, const string& title, bool focused)
+{
+    Console::SetColor(focused ? Console::CYAN : Console::WHITE);
+    Console::Goto(x, y);
+    cout << border::TL << string(width - 2, border::H) << border::TR;
+    for (int row = 1; row < height - 1; row++){
+        Console::Goto(x, y + row);
+        cout << border::V;
+        Console::Goto(x + width - 1, y + row);
+        cout << border::V;
+    }
+    Console::Goto(x, y + height - 1);
+    cout << border::BL << string(width - 2, border::H) << border::BR;
+
+    Console::SetColor(Console::YELLOW);
+    Console::Goto(x + 1, y + 1);
+    cout << title.substr(0, width - 2);
+    Console::SetColor(Console::WHITE);
+}
+
+void DrawRoomList(Nhatro& nhatro, int filter, const string& search)
+{
+    vector<Room*> rooms;
+    string query = ToLower(search);
+    for (int i = 0; i < nhatro.GetNumRoom(); i++){
+        Room* room = nhatro.GetRoom(i);
+        if (filter == 1 && room->IsFull()) continue;
+        if (filter >= 2 && static_cast<int>(room->Type()) != filter - 2) continue;
+
+        if (!query.empty()
+            && ToLower(room->GetId()).find(query) == string::npos
+            && ToLower(room->GetName()).find(query) == string::npos)
+            continue;
+        rooms.push_back(room);
+    }
+
+    Console::SetColor(Console::WHITE);
+    Console::Goto(0, 13);
+    cout << "So phong: " << rooms.size() << "                                      ";
+    Console::Goto(0, 14);
+    RoomTableInit();
+    for (size_t i = 0; i < rooms.size(); i++){
+        Console::Goto(0, 16 + static_cast<int>(i));
+        cout << *rooms[i];
+    }
+    Console::Goto(0, 16 + static_cast<int>(rooms.size()));
+    RoomTableEnd();
+}
+
+void DrawManageRoomsScreen(Nhatro& nhatro, int focus, int filter,
+    int selectedAction, const string& search)
+{
+    system("cls");
+    Console::SetCursorVisible(false);
+    Console::SetColor(Console::YELLOW);
+    Console::Goto(0, 0);
+    cout << center("QUAN LY PHONG", 80);
+
+    DrawPanel(2, 2, 23, 10, "LOC PHONG", focus == 1);
+    const vector<string> filters = {
+        "Tat ca phong", "Con cho", "Phong Basic", "Phong Vip", "Phong Studio"
+    };
+    for (int i = 0; i < static_cast<int>(filters.size()); i++){
+        Console::Goto(4, 4 + i);
+        if (i == filter) Console::SetColor(Console::BLACK, Console::WHITE);
+        else Console::SetColor(Console::WHITE, Console::BLACK);
+        cout << string(19, ' ');
+        Console::Goto(4, 4 + i);
+        cout << filters[i];
+    }
+
+    DrawPanel(26, 2, 52, 4, "TIM KIEM MA HOAC TEN", focus == 0);
+    Console::Goto(28, 4);
+    Console::SetColor(Console::WHITE);
+    cout << "> " << search.substr(0, 46);
+
+    const vector<string> actions = {
+        "THEM [A]", "XOA [D]", "SUA [U]", "XEM [I]"
+    };
+    const vector<string> keyHints = {
+        "Enter / A", "Enter / D", "Enter / U", "Enter / I"
+    };
+    for (int i = 0; i < static_cast<int>(actions.size()); i++){
+        int x = 26 + i * 13;
+        DrawPanel(x, 7, 12, 5, actions[i], focus == 2 && i == selectedAction);
+        Console::Goto(x + 1, 9);
+        Console::SetColor(focus == 2 && i == selectedAction
+            ? Console::YELLOW : Console::WHITE);
+        cout << keyHints[i];
+    }
+
+    Console::SetColor(Console::WHITE);
+    Console::Goto(0, 12);
+    cout << "TAB: chuyen muc | Tim: go chu, Backspace | Nut: trai/phai, Enter | ESC: thoat";
+    DrawRoomList(nhatro, filter, search);
+    Console::SetColor(Console::WHITE);
 }
 }
 
@@ -214,46 +322,68 @@ void SaveRoomData(const string& filename, Nhatro& nhatro)
 
 void ManageRooms(Nhatro& nhatro)
 {
-    MenuBox menu(2, 1, 38, "QUAN LY PHONG");
-    menu.AddOption("Hien thi danh sach phong");
-    menu.AddOption("Tim phong theo ma / ten");
-    menu.AddOption("Xem chi tiet phong");
-    menu.AddOption("Hien thi phong con cho");
-    menu.AddOption("Loc phong theo loai");
-    menu.AddOption("Them phong");
-    menu.AddOption("Xoa phong");
-    menu.AddOption("Cap nhat phong");
+    int focus = 2;
+    int filter = 0;
+    int selectedAction = 0;
+    string search;
+    auto executeAction = [&]() {
+        switch (selectedAction){
+            case 0: AddRoom(nhatro); break;
+            case 1: DeleteRoom(nhatro); break;
+            case 2: UpdateRoom(nhatro); break;
+            case 3: ShowRoomDetails(nhatro); break;
+        }
+        focus = 2;
+    };
 
-    int choice;
-    while ((choice = menu.Exec()) != -1){
-        switch (choice){
-            case 0:
-                nhatro.ShowRooms();
-                Pause();
-                break;
-            case 1:
-                FindRooms(nhatro);
-                break;
-            case 2:
-                ShowRoomDetails(nhatro);
-                break;
-            case 3:
-                ShowAvailableRooms(nhatro);
-                break;
-            case 4:
-                ShowRoomsByType(nhatro);
-                break;
-            case 5:
-                AddRoom(nhatro);
-                break;
-            case 6:
-                DeleteRoom(nhatro);
-                break;
-            case 7:
-                UpdateRoom(nhatro);
-                break;
+    while (true){
+        DrawManageRoomsScreen(nhatro, focus, filter, selectedAction, search);
+
+        char pressed;
+        Console::Key key = Console::Read(pressed);
+        if (key == Console::ESC) break;
+
+        if (key == Console::TAB){
+            focus = (focus + 1) % 3;
+        }
+        else if (focus == 0){
+            if (key == Console::BACKSPACE){
+                if (!search.empty()) search.pop_back();
+            }
+            else if (pressed != '\0' && search.size() < 64){
+                search += pressed;
+            }
+            else if (key == Console::ENTER){
+                focus = 1;
+            }
+        }
+        else if (focus == 1){
+            if (key == Console::UP || key == Console::LEFT)
+                filter = (filter + 4) % 5;
+            else if (key == Console::DOWN || key == Console::RIGHT)
+                filter = (filter + 1) % 5;
+            else if (key == Console::ENTER)
+                focus = 2;
+        }
+        else if (focus == 2){
+            if (key == Console::LEFT)
+                selectedAction = (selectedAction + 3) % 4;
+            else if (key == Console::RIGHT)
+                selectedAction = (selectedAction + 1) % 4;
+            else if (key == Console::ENTER){
+                executeAction();
+            }
+            else if (pressed != '\0'){
+                switch (tolower(static_cast<unsigned char>(pressed))){
+                    case 'a': selectedAction = 0; executeAction(); break;
+                    case 'd': selectedAction = 1; executeAction(); break;
+                    case 'u': selectedAction = 2; executeAction(); break;
+                    case 'i': selectedAction = 3; executeAction(); break;
+                }
+            }
         }
     }
+    Console::SetColor(Console::WHITE);
 }
 
 void FindRooms(Nhatro& nhatro)

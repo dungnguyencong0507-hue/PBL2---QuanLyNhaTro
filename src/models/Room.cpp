@@ -5,7 +5,7 @@ ull Room::electricUnitPrice = 3500;
 ull Room::waterUnitPrice = 8000;
 ull Room::internetCost = 50000;
 ull Room::trashCost = 15000;
-ull Room::serviceCost = 0;
+ull Room::serviceCost = 50000;
 
 Room::Room(const string& id,const string& name,int capacity,int floor) 
     : id(id), name(name) , capacity(capacity) , floor(floor)
@@ -280,12 +280,12 @@ void Room::AddDamage(const Damage& d)
 ostream& operator<<(ostream& o, const Room& room)
 {
     o << std::left << border::V
-       << std::setw(ROOM_TYPE_W) << room.GetRoomType() << border::V
-       << std::setw(ROOM_ID_W) << room.id << border::V
-       << std::setw(ROOM_NAME_W) << room.name << border::V
+       << std::setw(ROOM_TYPE_W) << room.GetRoomType().substr(0, ROOM_TYPE_W) << border::V
+       << std::setw(ROOM_ID_W) << room.id.substr(0, ROOM_ID_W) << border::V
+       << std::setw(ROOM_NAME_W) << room.name.substr(0, ROOM_NAME_W) << border::V
        << std::setw(ROOM_CAP_W) << room.capacity << border::V
        << std::setw(ROOM_FLOOR_W) << room.floor << border::V
-       << std::setw(ROOM_PRICE_W) << room.GetRentPrice() << border::V
+       << std::setw(ROOM_PRICE_W) << std::to_string(room.GetRentPrice()).substr(0, ROOM_PRICE_W) << border::V
        << std::setw(ROOM_AVAILABLE_W) << (room.IsFull() ? "HET" : "CON") << border::V;
     return o;
 }

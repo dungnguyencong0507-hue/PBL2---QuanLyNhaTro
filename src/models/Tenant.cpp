@@ -105,11 +105,12 @@ void Tenant::GetDiscount()
 ostream& operator<<(ostream& o, const Tenant& tenant)
 {
     o << std::left << border::V
-        << setw(TENANT_ID_W) << tenant.id << border::V
-        << setw(TENANT_CCCD_W) << tenant.cccdID << border::V
-        << setw(TENANT_PHONE_W) << tenant.phone << border::V
+        << setw(TENANT_ID_W) << tenant.id.substr(0, TENANT_ID_W) << border::V
+        << setw(TENANT_CCCD_W) << tenant.cccdID.substr(0, TENANT_CCCD_W) << border::V
+        << setw(TENANT_PHONE_W) << tenant.phone.substr(0, TENANT_PHONE_W) << border::V
         << setw(TENANT_GENDER_W) << (tenant.gender == Male ? "Nam" : "Nu") << border::V
-        << setw(TENANT_ROOM_W) << (tenant.IsRenting() ? tenant.room->GetName() : "Khong") << border::V
+        << setw(TENANT_ROOM_W) << (tenant.IsRenting()
+            ? tenant.room->GetName().substr(0, TENANT_ROOM_W) : "Khong") << border::V
         << setw(TENANT_TMP_RSD_W) << (tenant.isTemporaryResidence ? "Roi" : "Chua") << border::V;
     return o;
 }

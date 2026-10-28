@@ -1,9 +1,11 @@
 #pragma once
 #include <conio.h>
 #include <windows.h>
+#include <algorithm>
 #include <iostream>
 #include <functional>
 #include <vector>
+#include <cstdlib>
 #include <header.h>
 using namespace std;
 
@@ -103,6 +105,10 @@ public:
             std::cout << spaces;
         }
     }
+
+    static void ClearScreen() {
+        system("cls");
+    }
 };
 
 class Box
@@ -158,8 +164,8 @@ class DataBox : public Box
 private:
     function<void()> render;
 public:
-    DataBox(int x, int y, int w, int h, const string& title = "", function<void()> func = nullptr)
-        : Box(x, y, w, h, title), render(func) {}
+    DataBox(int y, const string& title = "", function<void()> func = nullptr)
+        : Box(0, y, 100, 100, title), render(func) {}
     ~DataBox() = default;
 
     void Draw() const override {
@@ -188,6 +194,10 @@ public:
     }
     ~MenuBox() = default;
 
+    int GetSize() const {
+        return static_cast<int>(this->options.size());
+    }
+
     void AddOption(const string& op) {
         options.push_back(op);
         this->h++;
@@ -196,6 +206,7 @@ public:
     int Exec() {
         if (this->options.empty()) return -1;
 
+        Console::ClearScreen();
         this->isUsed = true;
 
         while (this->isUsed) {
@@ -204,21 +215,23 @@ public:
             char c;
             Console::Key k = Console::Read(c);
             if (k == Console::UP){
-                if (this->select <= 0) this->select = this->options.size() - 1;
+                if (this->select <= 0) this->select = this->GetSize() - 1;
                 else this->select--;
             }
             else if (k == Console::DOWN){
-                if (this->select >= this->options.size() - 1) this->select = 0;
+                if (this->select >= this->GetSize() - 1) this->select = 0;
                 else this->select++;
             }
             else if (k == Console::ENTER){
                 this->Quit();
                 Console::SetColor(Console::WHITE);
+                Console::ClearScreen();
                 return this->select;
             }
             else if (k == Console::ESC){
                 this->Quit();
                 Console::SetColor(Console::WHITE);
+                Console::ClearScreen();
                 return -1;
             }
         }
@@ -242,7 +255,7 @@ public:
         cout << border::RT2 << string(this->w - 2, border::H2) << border::LT2;
 
         int contentWidth = this->w > 3 ? this->w - 3 : 0;
-        for (int i = 0; i < this->options.size(); i++){
+        for (int i = 0; i < (this->GetSize()); i++){
             Console::Goto(this->x + 1, this->y + 3 + i);
             if (i == this->select) Console::SetColor(Console::BLACK, Console::WHITE);
             else Console::SetColor(Console::WHITE, Console::BLACK);
@@ -264,21 +277,37 @@ struct Field
 class FormBox : public Box
 {
 private:
+    float valueRatio;
     vector<Field> fields;
     int curr;
     bool isUsed = false;
     bool confirmed = false;
+
+    int ValueStartX() const {
+        return this->x + static_cast<int>((this->w - 2) * (1 - this->valueRatio)) + 2;
+    }
+
+    int ValueWidth() const {
+        int width = this->x + this->w - 1 - this->ValueStartX();
+        return width > 0 ? width : 0;
+    }
 public:
-    FormBox(int x, int y, int w, const string& title = "")
-        : Box(x, y, w, 5, title) 
+    FormBox(int x, int y, int w, float r, const string& title = "")
+        : Box(x, y, w, 5, title), valueRatio(r)
     {
         this->curr = 0;
     }
+    FormBox(int x, int y, int w, const string& title = "")
+        : FormBox(x, y, w, 0.5f, title) {}
     ~FormBox() = default;
 
     void AddField(const string& lab, const string& val) {
         this->fields.push_back(Field{lab, val});
         this->h ++;
+    }
+
+    int GetSize() const {
+        return this->fields.size();
     }
 
     void Draw() const override {
@@ -290,21 +319,21 @@ public:
 
         Console::Goto(this->x, this->y + 2);
         Console::SetColor(Console::WHITE);
-        cout << border::RT2 << string(this->w - 2, border::H) << border::LT;
+        cout << border::RT << string(this->w - 2, border::H) << border::LT;
 
-        for (int i = 0; i < this->fields.size(); i++){
-            string text = this->fields[i].label + " : " + this->fields[i].value;
-            int contentWidth = this->w > 2 ? this->w - 2 : 0;
-            text = text.substr(0, contentWidth);
-            text += string(contentWidth - text.size(), ' ');
-
+        for (int i = 0; i < this->GetSize(); i++){
             Console::Goto(this->x + 1, this->y + 3 + i);
-            if (i == this->curr) Console::SetColor(Console::BLACK, Console::WHITE);
-            else Console::SetColor(Console::WHITE, Console::BLACK);
-            cout << text;
+            Console::SetColor(Console::CYAN);
+            cout << this->fields[i].label;
+
+            Console::Goto(this->ValueStartX() - 2, this->y + 3 + i);
+            Console::SetColor(Console::CYAN);
+            cout << ": " << string(this->ValueWidth(), ' ');
+            Console::Goto(this->ValueStartX(), this->y + 3 + i);
+            cout << this->fields[i].value.substr(0, this->ValueWidth());
         }
         Console::Goto(this->x + 1, this->y + h - 2);
-        if (this->curr == this->fields.size()) Console::SetColor(Console::BLACK, Console::WHITE);
+        if (this->curr == this->GetSize()) Console::SetColor(Console::BLACK, Console::WHITE);
         else Console::SetColor(Console::WHITE, Console::BLACK);
         cout << "[ XAC NHAN LUU THONG TIN ]";
         Console::SetColor(Console::WHITE);
@@ -319,6 +348,7 @@ public:
     }
 
     bool Exec() {
+        Console::ClearScreen();
         this->isUsed = true;
         this->confirmed = false;
         Console::SetCursorVisible(true);
@@ -327,39 +357,41 @@ public:
             this->Draw();
             Console::SetCursorVisible(true);
 
-            if (this->curr < this->fields.size()){
-                int cursorX = this->x + 1 + this->fields[this->curr].label.size() + 3 + this->fields[this->curr].value.size();
+            if (this->curr < this->GetSize()){
+                int cursorX = this->ValueStartX()
+                    + min(this->fields[this->curr].value.size(),
+                        static_cast<size_t>(this->ValueWidth()));
+                if (this->ValueWidth() > 0 && cursorX >= this->x + this->w - 1)
+                    cursorX = this->x + this->w - 2;
                 Console::Goto(cursorX, this->y + 3 + this->curr);
             }
 
             char c;
             Console::Key k = Console::Read(c);
             if (k == Console::UP){
-                if (this->curr <= 0) this->curr = this->fields.size();
+                if (this->curr <= 0) this->curr = this->GetSize();
                 else this->curr--;
             }
-            else if (k == Console::DOWN || k == Console::TAB){
-                if (this->curr >= this->fields.size()) this->curr = 0;
+            else if (k == Console::DOWN){
+                if (this->curr >= this->GetSize()) this->curr = 0;
                 else this->curr++;
             }
             else if (k == Console::ENTER){
-                if (this->curr == this->fields.size()){
+                if (this->curr == this->GetSize()){
                     this->confirmed = true;
                     this->Quit();
                 }
-                else if (this->curr < this->fields.size()) this->curr++;
+                else if (this->curr < this->GetSize()) this->curr++;
             }
             else if (k == Console::ESC) this->Quit();
             else if (k == Console::BACKSPACE && this->curr < this->fields.size()){
                 if (!this->fields[this->curr].value.empty())
                     this->fields[this->curr].value.pop_back();
             }
-            else if (c != '\0' && this->curr < this->fields.size()){
-                int maxLength = this->w - 2
-                    - static_cast<int>(this->fields[this->curr].label.size()) - 3;
-                if (maxLength > 0
-                    && this->fields[this->curr].value.size() < maxLength)
-                    this->fields[this->curr].value += c;
+            else if (c != '\0' && this->curr < this->fields.size()
+                && this->fields[this->curr].value.size()
+                    < static_cast<size_t>(this->ValueWidth())){
+                this->fields[this->curr].value += c;
             }
         }
 

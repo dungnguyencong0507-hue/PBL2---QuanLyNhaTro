@@ -81,6 +81,17 @@ bool Nhatro::AddTenant(unique_ptr<Tenant> newTenant)
     return true;
 }
 
+bool Nhatro::TenantCheckInRoom(Tenant* tenant, Room* room)
+{
+    if (tenant == nullptr || room == nullptr) throw runtime_error("Khong ton tai du lieu");
+    return room->AddTenant(tenant);
+}
+bool Nhatro::TenantCheckOutRoom(Tenant* tenant, Room* room)
+{
+    if (tenant == nullptr || room == nullptr) throw runtime_error("Khong ton tai du lieu");
+    return room->RemoveTenant(tenant);
+}
+
 void Nhatro::ShowRooms() const
 {
     RoomTableInit();
