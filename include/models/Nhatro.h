@@ -32,7 +32,7 @@ public:
     bool AddRoom(std::unique_ptr<Room>);
     bool RemoveRoom(Room*);
 
-    bool AddTenant(std::unique_ptr<Tenant> , Room*);
+    bool AddTenant(std::unique_ptr<Tenant>);
 
     void ShowRooms() const;
     void ShowRoomsByType(RoomType) const;
