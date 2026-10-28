@@ -77,7 +77,7 @@ bool Nhatro::AddTenant(unique_ptr<Tenant> newTenant)
 {
     if (newTenant == nullptr) return false;
     if (find(this->tenants.begin(), this->tenants.end(), newTenant) != this->tenants.end()) return false;
-    this->tenants.push_back(newTenant);
+    this->tenants.push_back(std::move(newTenant));
     return true;
 }
 
