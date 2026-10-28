@@ -10,3 +10,5 @@ void ShowTenants(Nhatro&);
 void FindTenant(Nhatro&);
 void AddTenant(Nhatro&);
 void UpdateTenant(Nhatro&);
+void CheckInTenant(Nhatro&);
+void CheckOutTenant(Nhatro&);

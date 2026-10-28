@@ -73,21 +73,8 @@ bool IsValidDate(int day, int month, int year)
 
 void ShowInvoice(const Room& room, const MonthlyBill& bill)
 {
-    cout << "Phong " << room.GetName() << " (" << room.GetId() << ")"
-        << " | Thang " << bill.month.month << "/" << bill.month.year
-        << " | Thue: " << bill.rentCost
-        << " | Dich vu: " << bill.serviceCost
-        << " | Dien: " << bill.electricCost
-        << " (" << bill.oldElectricIndex << " -> " << bill.newElectricIndex << ")"
-        << " | Nuoc: " << bill.waterCost
-        << " (" << bill.oldWaterIndex << " -> " << bill.newWaterIndex << ")"
-        << " | Hu hong: " << bill.damageCost
-        << " | Tong: " << bill.totalCost
-        << " | " << (bill.isPaid ? "Da thanh toan" : "Chua thanh toan");
-    if (bill.isPaid)
-        cout << " ngay " << bill.paymentDate.day << "/"
-            << bill.paymentDate.month << "/" << bill.paymentDate.year;
-    cout << '\n';
+    cout << "Phong " << room.GetName() << " (" << room.GetId() << ")\n"
+        << bill;
 }
 }
 
@@ -472,6 +459,7 @@ void ShowInvoiceHistory(Nhatro& nhatro)
     cout << "\nLich su hoa don phong " << room->GetName()
         << " (" << room->GetId() << "):\n";
     if (room->GetMonthlyBills().empty()) cout << "Phong chua co hoa don.\n";
+    cout << endl;
     for (const MonthlyBill& bill : room->GetMonthlyBills())
         ShowInvoice(*room, bill);
     Pause();

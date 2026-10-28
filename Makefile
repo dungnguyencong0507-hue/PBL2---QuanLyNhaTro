@@ -1,6 +1,6 @@
 CXX = g++
 CPPFLAGS += -Iinclude -Iinclude/models -Iinclude/manager
-CXXFLAGS ?= -std=c++17 -Wall -Wextra
+CXXFLAGS ?= -std=c++17 -Wall -Wextra -static
 
 TARGET := qlnt.exe
 SOURCES := $(wildcard src/*.cpp src/manager/*.cpp src/models/*.cpp)

@@ -55,8 +55,9 @@ struct MonthlyBill
 inline ostream& operator<<(ostream& o, const MonthlyBill& bill)
 {
     o << "\nHoa don thang " << bill.month << endl;
-    o << border::TL << string(FIELD_W, border::H) 
-        << border::DT << string(COST_W, border::H) << border::TR;
+    o << border::TL << border::Repeat(FIELD_W, border::H)
+        << border::DT << border::Repeat(COST_W, border::H) << border::TR
+        << endl;
         
     o << left 
         << border::V << setw(FIELD_W) << "Tien thue" << border::V 
@@ -72,8 +73,8 @@ inline ostream& operator<<(ostream& o, const MonthlyBill& bill)
         << border::V << setw(FIELD_W) << "Thanh tien" << border::V 
         << setw(COST_W) << bill.totalCost << border::V << endl;
     
-    o << border::BL << string(FIELD_W, border::H) 
-        << border::UT << string(COST_W, border::H) << border::BR;
+    o << border::BL << border::Repeat(FIELD_W, border::H)
+        << border::UT << border::Repeat(COST_W, border::H) << border::BR;
     o << "\nTrang thai: ";
     if (bill.isPaid) o << "Da thanh toan | ngay" << bill.paymentDate;
     else o << "Chua thanh toan";

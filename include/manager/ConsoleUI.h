@@ -107,6 +107,7 @@ public:
     }
 
     static void ClearScreen() {
+        SetConsoleOutputCP(CP_UTF8);
         system("cls");
     }
 };
@@ -125,7 +126,7 @@ public:
         Console::SetColor(Console::WHITE);
         if (type){
             Console::Goto(this->x, this->y);
-            cout << border::TL2 << string(this->w - 2, border::H2) << border::TR2;
+            cout << border::TL2 << border::Repeat(this->w - 2, border::H2) << border::TR2;
             for (int i = 1; i < this->h-1; i++){
                 Console::Goto(this->x, this->y + i);
                 cout << border::V2;
@@ -133,11 +134,11 @@ public:
                 cout << border::V2;
             }
             Console::Goto(this->x, this->y + this->h - 1);
-            cout << border::BL2 << string(this->w - 2, border::H2) << border::BR2;
+            cout << border::BL2 << border::Repeat(this->w - 2, border::H2) << border::BR2;
         }
         else{
             Console::Goto(this->x, this->y);
-            cout << border::TL << string(this->w - 2, border::H) << border::TR;
+            cout << border::TL << border::Repeat(this->w - 2, border::H) << border::TR;
             for (int i = 1; i < this->h-1; i++){
                 Console::Goto(this->x, this->y + i);
                 cout << border::V;
@@ -145,7 +146,7 @@ public:
                 cout << border::V;
             }
             Console::Goto(this->x, this->y + this->h - 1);
-            cout << border::BL << string(this->w - 2, border::H) << border::BR;
+            cout << border::BL << border::Repeat(this->w - 2, border::H) << border::BR;
         }
     }
 
@@ -252,7 +253,7 @@ public:
 
         Console::Goto(this->x, this->y + 2);
         Console::SetColor(Console::WHITE);
-        cout << border::RT2 << string(this->w - 2, border::H2) << border::LT2;
+        cout << border::RT2 << border::Repeat(this->w - 2, border::H2) << border::LT2;
 
         int contentWidth = this->w > 3 ? this->w - 3 : 0;
         for (int i = 0; i < (this->GetSize()); i++){
@@ -319,7 +320,7 @@ public:
 
         Console::Goto(this->x, this->y + 2);
         Console::SetColor(Console::WHITE);
-        cout << border::RT << string(this->w - 2, border::H) << border::LT;
+        cout << border::RT << border::Repeat(this->w - 2, border::H) << border::LT;
 
         for (int i = 0; i < this->GetSize(); i++){
             Console::Goto(this->x + 1, this->y + 3 + i);
@@ -397,6 +398,7 @@ public:
 
         Console::SetCursorVisible(false);
         Console::SetColor(Console::WHITE);
+        Console::ClearScreen();
         return this->confirmed;
     }
 };
