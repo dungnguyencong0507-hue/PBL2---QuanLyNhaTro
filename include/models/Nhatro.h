@@ -39,6 +39,9 @@ public:
     void ShowTenants() const;
     void ShowAvailableRooms() const;
 
+    void SortRoomsByPrice(bool);
+    void SortRoomsByAvailableSlots(bool);
+
     Room* FindRoom(const std::string&);
     Tenant* FindTenant(const std::string&);
     friend std::ostream& operator<<(std::ostream&, const Nhatro&);

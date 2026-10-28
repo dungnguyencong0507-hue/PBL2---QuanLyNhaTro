@@ -73,7 +73,7 @@ bool Nhatro::RemoveRoom(Room* targetRoom)
     return false;
 }
 
-bool Nhatro::AddTenant(unique_ptr<Tenant> newTenant, Room* choiceRoom)
+bool Nhatro::AddTenant(unique_ptr<Tenant> newTenant)
 {
     if (newTenant == nullptr) return false;
     if (find(this->tenants.begin(), this->tenants.end(), newTenant) != this->tenants.end()) return false;
@@ -122,6 +122,35 @@ void Nhatro::ShowTenants() const
         cout << endl;
     }
     TenantTableEnd();
+}
+
+void Nhatro::SortRoomsByPrice(bool ascending)
+{
+    std::stable_sort(rooms.begin(), rooms.end(),
+        [ascending](const std::unique_ptr<Room>& a,
+                    const std::unique_ptr<Room>& b)
+        {
+            if (a->GetRentPrice() == b->GetRentPrice())
+                return a->GetId() < b->GetId();
+
+            return ascending
+                ? a->GetRentPrice() < b->GetRentPrice()
+                : a->GetRentPrice() > b->GetRentPrice();
+        });
+}
+void Nhatro::SortRoomsByAvailableSlots(bool tangdan)
+{
+    std::stable_sort(rooms.begin(), rooms.end(),
+        [tangdan](const std::unique_ptr<Room>& a,
+                  const std::unique_ptr<Room>& b)
+        {
+            const int choTrongA = a->GetCapacity() - a->GetTenantCount();
+            const int choTrongB = b->GetCapacity() - b->GetTenantCount();
+
+            return tangdan
+                ? choTrongA < choTrongB
+                : choTrongA > choTrongB;
+        });
 }
 
 ostream& operator<<(ostream& o, const Nhatro& nhatro)
