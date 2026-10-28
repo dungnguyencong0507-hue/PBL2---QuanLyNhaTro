@@ -43,6 +43,10 @@ int main()
                     return 0;
             }
         }
+
+        SaveRoomData(roomFile, nhatro);
+        SaveTenantData(tenantFile, nhatro);
+        SaveInvoiceData(billFile, nhatro);
     }
     catch (const exception& error){
         cerr << "\nLoi: " << error.what() << '\n';

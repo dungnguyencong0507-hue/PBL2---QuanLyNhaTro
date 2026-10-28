@@ -4,21 +4,33 @@
 #include <string>
 #include <cctype>
 
-#define ROOM_ID_W           7
-#define ROOM_NAME_W         10
-#define ROOM_CAP_W          5
+#define ROOM_ID_W           8
+#define ROOM_NAME_W         12
+#define ROOM_CAP_W          9
 #define ROOM_FLOOR_W        5
 #define ROOM_PRICE_W        12
 #define ROOM_TYPE_W         12
-#define ROOM_AVAILABLE_W    5
+#define ROOM_AVAILABLE_W    10
 
-#define TENANT_ID_W         5
+#define TENANT_ID_W         8
 #define TENANT_NAME_W       15
-#define TENANT_GENDER_W     7
+#define TENANT_GENDER_W     9
 #define TENANT_PHONE_W      12
 #define TENANT_CCCD_W       15
-#define TENANT_ROOM_W       7
-#define TENANT_TMP_RSD_W    5
+#define TENANT_ROOM_W       14
+#define TENANT_TMP_RSD_W    15
+
+#define FIELD_W 15
+#define COST_W 10
+
+#define F_ID_W 8
+#define F_NAME_W 15
+#define F_PRICE_W 15
+
+#define DAM_DATE_W 10
+#define DAM_FURN_W 15
+#define DAM_DESCRIPTION_W 50
+#define DAM_RESOLUTION_W 30
 
 namespace border {
     constexpr char V      = (char)179; // │
@@ -49,16 +61,16 @@ namespace border {
 inline void RoomTableInit()
 {
     std::cout << border::TL 
-        << std::string(border::H, ROOM_TYPE_W)      << border::DT
-        << std::string(border::H, ROOM_ID_W)        << border::DT
-        << std::string(border::H, ROOM_NAME_W)      << border::DT
-        << std::string(border::H, ROOM_CAP_W)       << border::DT
-        << std::string(border::H, ROOM_FLOOR_W)     << border::DT
-        << std::string(border::H, ROOM_PRICE_W)     << border::DT
-        << std::string(border::H, ROOM_AVAILABLE_W) << border::DT
+        << std::string(ROOM_TYPE_W, border::H)      << border::DT
+        << std::string(ROOM_ID_W, border::H)        << border::DT
+        << std::string(ROOM_NAME_W, border::H)      << border::DT
+        << std::string(ROOM_CAP_W, border::H)       << border::DT
+        << std::string(ROOM_FLOOR_W, border::H)     << border::DT
+        << std::string(ROOM_PRICE_W, border::H)     << border::DT
+        << std::string(ROOM_AVAILABLE_W, border::H)
         << border::TR << std::endl;
 
-    std::cout << std::left
+    std::cout << std::left << border::V
         << std::setw(ROOM_TYPE_W)    << "Loai phong"     << border::V
         << std::setw(ROOM_ID_W)      << "Ma phong"       << border::V
         << std::setw(ROOM_NAME_W)    << "Phong"          << border::V
@@ -72,27 +84,27 @@ inline void RoomTableInit()
 inline void RoomTableEnd()
 {
     std::cout << border::BL 
-        << std::string(border::H, ROOM_TYPE_W)      << border::UT
-        << std::string(border::H, ROOM_ID_W)        << border::UT
-        << std::string(border::H, ROOM_NAME_W)      << border::UT
-        << std::string(border::H, ROOM_CAP_W)       << border::UT
-        << std::string(border::H, ROOM_FLOOR_W)     << border::UT
-        << std::string(border::H, ROOM_PRICE_W)     << border::UT
-        << std::string(border::H, ROOM_AVAILABLE_W) << border::UT
+        << std::string(ROOM_TYPE_W, border::H)      << border::UT
+        << std::string(ROOM_ID_W, border::H)        << border::UT
+        << std::string(ROOM_NAME_W, border::H)      << border::UT
+        << std::string(ROOM_CAP_W, border::H)       << border::UT
+        << std::string(ROOM_FLOOR_W, border::H)     << border::UT
+        << std::string(ROOM_PRICE_W, border::H)     << border::UT
+        << std::string(ROOM_AVAILABLE_W, border::H)
         << border::BR << std::endl;
 }
 
 inline void TenantTableInit()
 {
     std::cout << border::TL
-        << std::string(border::H, TENANT_ID_W)      << border::DT
-        << std::string(border::H, TENANT_CCCD_W)    << border::DT
-        << std::string(border::H, TENANT_PHONE_W)   << border::DT
-        << std::string(border::H, TENANT_GENDER_W)  << border::DT
-        << std::string(border::H, TENANT_ROOM_W)    << border::DT
-        << std::string(border::H, TENANT_TMP_RSD_W) << border::DT
+        << std::string(TENANT_ID_W, border::H)      << border::DT
+        << std::string(TENANT_CCCD_W, border::H)    << border::DT
+        << std::string(TENANT_PHONE_W, border::H)   << border::DT
+        << std::string(TENANT_GENDER_W, border::H)  << border::DT
+        << std::string(TENANT_ROOM_W, border::H)    << border::DT
+        << std::string(TENANT_TMP_RSD_W, border::H)
         << border::TR << std::endl;
-    std::cout << std::left 
+    std::cout << std::left << border::V
         << std::setw(TENANT_ID_W)        << "Ma khach"       << border::V
         << std::setw(TENANT_CCCD_W)      << "CCCD"           << border::V
         << std::setw(TENANT_PHONE_W)     << "SDT"            << border::V
@@ -105,12 +117,12 @@ inline void TenantTableInit()
 inline void TenantTableEnd()
 {
     std::cout << border::BL
-        << std::string(border::H, TENANT_ID_W)      << border::UT
-        << std::string(border::H, TENANT_CCCD_W)    << border::UT
-        << std::string(border::H, TENANT_PHONE_W)   << border::UT
-        << std::string(border::H, TENANT_GENDER_W)  << border::UT
-        << std::string(border::H, TENANT_ROOM_W)    << border::UT
-        << std::string(border::H, TENANT_TMP_RSD_W) << border::UT
+        << std::string(TENANT_ID_W, border::H)      << border::UT
+        << std::string(TENANT_CCCD_W, border::H)    << border::UT
+        << std::string(TENANT_PHONE_W, border::H)   << border::UT
+        << std::string(TENANT_GENDER_W, border::H)  << border::UT
+        << std::string(TENANT_ROOM_W, border::H)    << border::UT
+        << std::string(TENANT_TMP_RSD_W, border::H)
         << border::BR << std::endl;
 }
 
