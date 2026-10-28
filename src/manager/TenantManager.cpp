@@ -185,6 +185,8 @@ void ManageTenants(Nhatro& nhatro)
     menu.AddOption("Tim khach theo ma / ten");
     menu.AddOption("Them khach thue");
     menu.AddOption("Cap nhat khach thue");
+    menu.AddOption("Check in khach vao phong");
+    menu.AddOption("Check out khach khoi phong");
 
     int choice;
     while ((choice = menu.Exec()) != -1){
@@ -200,6 +202,12 @@ void ManageTenants(Nhatro& nhatro)
                 break;
             case 3:
                 UpdateTenant(nhatro);
+                break;
+            case 4:
+                CheckInTenant(nhatro);
+                break;
+            case 5:
+                CheckOutTenant(nhatro);
                 break;
         }
     }
@@ -218,15 +226,23 @@ void FindTenant(Nhatro& nhatro)
 
     string key = ToLower(values[0]);
     bool found = false;
-    for (int i = 0; i < nhatro.GetNumTenant(); i++){
-        Tenant* tenant = nhatro.GetTenant(i);
-        string id = ToLower(tenant->GetId());
-        string name = ToLower(tenant->GetName());
-        if (id == key || name.find(key) != string::npos){
+    if (!isName(key)) {
+        Tenant* tenant = nhatro.FindTenant(key);
+        if (tenant) {
             ShowTenantDetails(*tenant);
             found = true;
         }
     }
+    else {
+        for (int i = 0; i < nhatro.GetNumTenant(); i++){
+            Tenant* tenant = nhatro.GetTenant(i);
+            string id = ToLower(tenant->GetId());
+            string name = ToLower(tenant->GetName());
+            if (name.find(key) != string::npos){
+            ShowTenantDetails(*tenant);
+            found = true;
+        }
+    }}
     if (!found) cout << "Khong tim thay khach thue phu hop.\n";
     Pause();
 }
@@ -366,5 +382,83 @@ void UpdateTenant(Nhatro& nhatro)
 
     SaveTenantData(TENANT_DATA_FILE, nhatro);
     cout << "Da cap nhat khach thue thanh cong.\n";
+    Pause();
+}
+
+void CheckInTenant(Nhatro& nhatro)
+{
+    vector<string> values;
+    if (!ReadForm("CHECK IN KHACH THUE", {
+        {"Ma khach thue", ""},
+        {"Ma phong", ""}
+    }, values)) return;
+
+    Tenant* tenant = nhatro.FindTenant(values[0]);
+    if (!tenant){
+        cout << "Khong tim thay khach thue.\n";
+        Pause();
+        return;
+    }
+    if (tenant->GetRoom()){
+        cout << "Khach thue dang o phong "
+            << tenant->GetRoom()->GetId() << ".\n";
+        Pause();
+        return;
+    }
+
+    Room* room = nhatro.FindRoom(values[1]);
+    if (!room){
+        cout << "Khong tim thay phong.\n";
+        Pause();
+        return;
+    }
+    if (room->IsFull()){
+        cout << "Phong da day, khong the check in.\n";
+        Pause();
+        return;
+    }
+    if (!nhatro.TenantCheckInRoom(tenant, room)){
+        cout << "Khong the check in khach vao phong.\n";
+        Pause();
+        return;
+    }
+
+    tenant->SetRoom(room);
+    SaveTenantData(TENANT_DATA_FILE, nhatro);
+    cout << "Check in thanh cong cho khach " << tenant->GetId()
+        << " vao phong " << room->GetId() << ".\n";
+    Pause();
+}
+
+void CheckOutTenant(Nhatro& nhatro)
+{
+    vector<string> values;
+    if (!ReadForm("CHECK OUT KHACH THUE", {
+        {"Ma khach thue", ""}
+    }, values)) return;
+
+    Tenant* tenant = nhatro.FindTenant(values[0]);
+    if (!tenant){
+        cout << "Khong tim thay khach thue.\n";
+        Pause();
+        return;
+    }
+
+    Room* room = tenant->GetRoom();
+    if (!room){
+        cout << "Khach thue chua duoc xep phong.\n";
+        Pause();
+        return;
+    }
+    if (!nhatro.TenantCheckOutRoom(tenant, room)){
+        cout << "Khong the check out khach khoi phong.\n";
+        Pause();
+        return;
+    }
+
+    tenant->SetRoom(nullptr);
+    SaveTenantData(TENANT_DATA_FILE, nhatro);
+    cout << "Check out thanh cong cho khach " << tenant->GetId()
+        << " khoi phong " << room->GetId() << ".\n";
     Pause();
 }

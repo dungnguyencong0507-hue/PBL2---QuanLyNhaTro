@@ -149,18 +149,18 @@ void Nhatro::SortRoomsByPrice(bool ascending)
                 : a->GetRentPrice() > b->GetRentPrice();
         });
 }
-void Nhatro::SortRoomsByAvailableSlots(bool tangdan)
+void Nhatro::SortRoomsById(bool tangdan)
 {
     std::stable_sort(rooms.begin(), rooms.end(),
         [tangdan](const std::unique_ptr<Room>& a,
                   const std::unique_ptr<Room>& b)
         {
-            const int choTrongA = a->GetCapacity() - a->GetTenantCount();
-            const int choTrongB = b->GetCapacity() - b->GetTenantCount();
+            const string IDa = a->GetId();
+            const string IDb = b->GetId();
 
             return tangdan
-                ? choTrongA < choTrongB
-                : choTrongA > choTrongB;
+                ? IDa < IDb
+                : IDa > IDb;
         });
 }
 
@@ -174,16 +174,36 @@ ostream& operator<<(ostream& o, const Nhatro& nhatro)
 
 Room* Nhatro::FindRoom(const std::string& id)
 {
-    for (auto it=this->rooms.begin(); it!=this->rooms.end(); it++){
-        if (it->get()->GetId() == id) return it->get();
+    int left = 0, right = this->rooms.size() - 1;
+    while (left <= right) { 
+        int mid = left + (right - left) / 2;
+        if (this->rooms[mid]->GetId() == id) {
+            return this->rooms[mid].get();
+        }
+        else if (this->rooms[mid]->GetId() < id) {
+            left = mid + 1;
+        }
+        else {
+            right = mid - 1;
+        }
     }
     return nullptr;
 }
     
 Tenant* Nhatro::FindTenant(const std::string& id)
 {
-    for (auto it=this->tenants.begin(); it!=this->tenants.end(); it++){
-        if (it->get()->GetId() == id) return it->get();
+    int left = 0, right = this->tenants.size() - 1;
+    while (left <= right) { 
+        int mid = left + (right - left) / 2;
+        if (this->tenants[mid]->GetId() == id) {
+            return this->tenants[mid].get();
+        }
+        else if (this->tenants[mid]->GetId() < id) {
+            left = mid + 1;
+        }
+        else {
+            right = mid - 1;
+        }
     }
     return nullptr;
 }

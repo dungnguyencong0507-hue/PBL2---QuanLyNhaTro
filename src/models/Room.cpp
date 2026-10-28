@@ -283,7 +283,7 @@ ostream& operator<<(ostream& o, const Room& room)
        << std::setw(ROOM_TYPE_W) << room.GetRoomType().substr(0, ROOM_TYPE_W) << border::V
        << std::setw(ROOM_ID_W) << room.id.substr(0, ROOM_ID_W) << border::V
        << std::setw(ROOM_NAME_W) << room.name.substr(0, ROOM_NAME_W) << border::V
-       << std::setw(ROOM_CAP_W) << room.capacity << border::V
+       << std::setw(ROOM_CAP_W) << std::to_string(room.GetTenantCount()) + "/" + std::to_string(room.capacity) << border::V
        << std::setw(ROOM_FLOOR_W) << room.floor << border::V
        << std::setw(ROOM_PRICE_W) << std::to_string(room.GetRentPrice()).substr(0, ROOM_PRICE_W) << border::V
        << std::setw(ROOM_AVAILABLE_W) << (room.IsFull() ? "HET" : "CON") << border::V;

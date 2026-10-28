@@ -72,17 +72,17 @@ void Pause()
 ostream& operator<<(ostream& o, const vector<Furnishing>& furn)
 {
     o << border::TL
-        << string(F_ID_W, border::H) << border::DT
-        << string(F_NAME_W, border::H) << border::DT
-        << string(F_PRICE_W, border::H) << border::TR
+        << border::Repeat(F_ID_W, border::H) << border::DT
+        << border::Repeat(F_NAME_W, border::H) << border::DT
+        << border::Repeat(F_PRICE_W, border::H) << border::TR
         << endl;
     for (auto it : furn){
         o << it << endl;
     }
     o << border::BL
-        << string(F_ID_W, border::H) << border::UT
-        << string(F_NAME_W, border::H) << border::UT
-        << string(F_PRICE_W, border::H) << border::BR
+        << border::Repeat(F_ID_W, border::H) << border::UT
+        << border::Repeat(F_NAME_W, border::H) << border::UT
+        << border::Repeat(F_PRICE_W, border::H) << border::BR
         << endl;
     return o;
 }
@@ -90,19 +90,19 @@ ostream& operator<<(ostream& o, const vector<Furnishing>& furn)
 ostream& operator<<(ostream& o, const vector<Damage>& damage)
 {
     o << border::TL
-        << string(DAM_DATE_W, border::H) << border::DT
-        << string(DAM_FURN_W, border::H) << border::DT
-        << string(DAM_DESCRIPTION_W, border::H) << border::DT
-        << string(DAM_RESOLUTION_W, border::H) << border::TR
+        << border::Repeat(DAM_DATE_W, border::H) << border::DT
+        << border::Repeat(DAM_FURN_W, border::H) << border::DT
+        << border::Repeat(DAM_DESCRIPTION_W, border::H) << border::DT
+        << border::Repeat(DAM_RESOLUTION_W, border::H) << border::TR
         << endl;
     for (int i = damage.size()-1; i>=0; i--){
         o << damage[i] << endl;
     }
     o << border::BL
-        << string(DAM_DATE_W, border::H) << border::UT
-        << string(DAM_FURN_W, border::H) << border::UT
-        << string(DAM_DESCRIPTION_W, border::H) << border::UT
-        << string(DAM_RESOLUTION_W, border::H) << border::BR
+        << border::Repeat(DAM_DATE_W, border::H) << border::UT
+        << border::Repeat(DAM_FURN_W, border::H) << border::UT
+        << border::Repeat(DAM_DESCRIPTION_W, border::H) << border::UT
+        << border::Repeat(DAM_RESOLUTION_W, border::H) << border::BR
         << endl;
     return o;
 }
@@ -130,7 +130,7 @@ void PrintRoomDetails(const Room& room)
         TenantTableInit();
         for (Tenant* tenant : room.GetTenants()){
             if (tenant)
-                cout << tenant << '\n';
+                cout << *tenant << '\n';
         }
         TenantTableEnd();
     }
@@ -157,7 +157,7 @@ void DrawPanel(int x, int y, int width, int height, const string& title, bool fo
 {
     Console::SetColor(focused ? Console::CYAN : Console::WHITE);
     Console::Goto(x, y);
-    cout << border::TL << string(width - 2, border::H) << border::TR;
+    cout << border::TL << border::Repeat(width - 2, border::H) << border::TR;
     for (int row = 1; row < height - 1; row++){
         Console::Goto(x, y + row);
         cout << border::V;
@@ -165,12 +165,28 @@ void DrawPanel(int x, int y, int width, int height, const string& title, bool fo
         cout << border::V;
     }
     Console::Goto(x, y + height - 1);
-    cout << border::BL << string(width - 2, border::H) << border::BR;
+    cout << border::BL << border::Repeat(width - 2, border::H) << border::BR;
 
     Console::SetColor(Console::YELLOW);
     Console::Goto(x + 1, y + 1);
     cout << title.substr(0, width - 2);
     Console::SetColor(Console::WHITE);
+}
+
+void SortRooms(Nhatro& nhatro)
+{
+    MenuBox menu(2, 1, 42, "SAP XEP PHONG");
+    menu.AddOption("Gia thue tang dan");
+    menu.AddOption("Gia thue giam dan");
+    menu.AddOption("Ma phong tang dan");
+    menu.AddOption("Ma phong giam dan");
+
+    switch (menu.Exec()){
+        case 0: nhatro.SortRoomsByPrice(true); break;
+        case 1: nhatro.SortRoomsByPrice(false); break;
+        case 2: nhatro.SortRoomsById(true); break;
+        case 3: nhatro.SortRoomsById(false); break;
+    }
 }
 
 void DrawRoomList(Nhatro& nhatro, int filter, const string& search)
@@ -205,7 +221,7 @@ void DrawRoomList(Nhatro& nhatro, int filter, const string& search)
 void DrawManageRoomsScreen(Nhatro& nhatro, int focus, int filter,
     int selectedAction, const string& search)
 {
-    system("cls");
+    Console::ClearScreen();
     Console::SetCursorVisible(false);
     Console::SetColor(Console::YELLOW);
     Console::Goto(0, 0);
@@ -230,14 +246,14 @@ void DrawManageRoomsScreen(Nhatro& nhatro, int focus, int filter,
     cout << "> " << search.substr(0, 46);
 
     const vector<string> actions = {
-        "THEM [A]", "XOA [D]", "SUA [U]", "XEM [I]"
+        "THEM [A]", "XOA [D]", "SUA [U]", "XEM [I]", "SAP XEP [S]"
     };
     const vector<string> keyHints = {
-        "Enter / A", "Enter / D", "Enter / U", "Enter / I"
+        "Enter/A", "Enter/D", "Enter/U", "Enter/I", "Enter/S"
     };
     for (int i = 0; i < static_cast<int>(actions.size()); i++){
-        int x = 26 + i * 13;
-        DrawPanel(x, 7, 12, 5, actions[i], focus == 2 && i == selectedAction);
+        int x = 26 + i * 10;
+        DrawPanel(x, 7, 10, 5, actions[i], focus == 2 && i == selectedAction);
         Console::Goto(x + 1, 9);
         Console::SetColor(focus == 2 && i == selectedAction
             ? Console::YELLOW : Console::WHITE);
@@ -246,7 +262,7 @@ void DrawManageRoomsScreen(Nhatro& nhatro, int focus, int filter,
 
     Console::SetColor(Console::WHITE);
     Console::Goto(0, 12);
-    cout << "TAB: chuyen muc | Tim: go chu, Backspace | Nut: trai/phai, Enter | ESC: thoat";
+    cout << "TAB: chuyen muc | Tim: go chu | Nut: trai/phai, Enter | ESC: thoat";
     DrawRoomList(nhatro, filter, search);
     Console::SetColor(Console::WHITE);
 }
@@ -332,6 +348,7 @@ void ManageRooms(Nhatro& nhatro)
             case 1: DeleteRoom(nhatro); break;
             case 2: UpdateRoom(nhatro); break;
             case 3: ShowRoomDetails(nhatro); break;
+            case 4: SortRooms(nhatro); break;
         }
         focus = 2;
     };
@@ -342,7 +359,6 @@ void ManageRooms(Nhatro& nhatro)
         char pressed;
         Console::Key key = Console::Read(pressed);
         if (key == Console::ESC) break;
-
         if (key == Console::TAB){
             focus = (focus + 1) % 3;
         }
@@ -367,9 +383,9 @@ void ManageRooms(Nhatro& nhatro)
         }
         else if (focus == 2){
             if (key == Console::LEFT)
-                selectedAction = (selectedAction + 3) % 4;
+                selectedAction = (selectedAction + 4) % 5;
             else if (key == Console::RIGHT)
-                selectedAction = (selectedAction + 1) % 4;
+                selectedAction = (selectedAction + 1) % 5;
             else if (key == Console::ENTER){
                 executeAction();
             }
@@ -379,6 +395,7 @@ void ManageRooms(Nhatro& nhatro)
                     case 'd': selectedAction = 1; executeAction(); break;
                     case 'u': selectedAction = 2; executeAction(); break;
                     case 'i': selectedAction = 3; executeAction(); break;
+                    case 's': selectedAction = 4; executeAction(); break;
                 }
             }
         }
@@ -393,9 +410,17 @@ void FindRooms(Nhatro& nhatro)
     string key = ToLower(values[0]);
     bool found = false;
 
-    for (int i = 0; i < nhatro.GetNumRoom(); i++){
+    if (!isName(key)) {
+        Room* room = nhatro.FindRoom(key);
+        if (room) {
+            PrintRoomDetails(*room);
+            found = true;
+        }
+    }
+
+    else for (int i = 0; i < nhatro.GetNumRoom(); i++){
         Room* room = nhatro.GetRoom(i);
-        if (ToLower(room->GetId()) == key || ToLower(room->GetName()) == key){
+        if (ToLower(room->GetName()) == key){
             PrintRoomDetails(*room);
             found = true;
         }

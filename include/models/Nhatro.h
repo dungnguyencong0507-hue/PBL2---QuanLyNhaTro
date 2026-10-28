@@ -42,7 +42,7 @@ public:
     void ShowAvailableRooms() const;
 
     void SortRoomsByPrice(bool);
-    void SortRoomsByAvailableSlots(bool);
+    void SortRoomsById(bool);
 
     Room* FindRoom(const std::string&);
     Tenant* FindTenant(const std::string&);
