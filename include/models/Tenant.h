@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <iostream>
+#include <header.h>
 #include <Room.h>
 
 enum Gender
@@ -21,11 +21,16 @@ protected:
     Room* room;
     bool isTemporaryResidence;
 
+    static std::string currID;
+
 public:
-    Tenant(const std::string&, const std::string&, const std::string&, const Gender, const std::string&, const std::string&);
+    Tenant(const std::string&, const std::string&, const Gender, const std::string&, const std::string&, const std::string&);
+    Tenant(const std::string&, const Gender, const std::string&, const std::string&, const std::string&);
     virtual ~Tenant();
 
     bool IsRenting() const;
+    bool IsTemporaryResidence() const;
+    bool IsLeader() const;
 
     std::string GetId() const;
     std::string GetName() const;
@@ -34,7 +39,6 @@ public:
     std::string GetHometown() const;
     Gender GetGender() const;
     Room* GetRoom() const;
-    bool GetTemporaryResidence() const;
     
     void SetName(const std::string&);
     void SetId(const std::string&);
@@ -47,5 +51,5 @@ public:
     
     virtual void GetDiscount();
 
-    friend std::ostream& operator<<(std::ostream&, const Tenant&);
+    // friend std::ostream& operator<<(std::ostream&, const Tenant&);
 };

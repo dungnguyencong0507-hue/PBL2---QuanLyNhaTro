@@ -1,5 +1,5 @@
 #pragma once
-#include "Room.h"
+#include <Room.h>
 
 class VipRoom : public Room
 {
@@ -12,6 +12,7 @@ public:
     ull calcRent() const override;
     std::string GetRoomType() const override;
     RoomType Type() const override;
+    ull GetStdPrice() const override;
 
-    friend std::ostream& operator<<(std::ostream&, const VipRoom&);
+    // friend std::ostream& operator<<(std::ostream&, const VipRoom&);
 };

@@ -1,5 +1,6 @@
-#include "VipRoom.h"
+#include <VipRoom.h>
 using namespace std;
+
 ull VipRoom::stdRentPrice = 3000000;
 
 VipRoom::VipRoom(const string& id, const string& name, const int& capacity, const int& floor)
@@ -16,7 +17,6 @@ std::string VipRoom::GetRoomType() const
 }
 ull VipRoom::calcRent() const
 {
-    // if(this->GetTenantCount() == 0) return 0;
     if (this->GetTenantCount() == 1) return rentPrice;
     return ull((double) rentPrice * (1 + 0.1 * (this->GetTenantCount() - 1))); 
 }
@@ -24,8 +24,12 @@ RoomType VipRoom::Type() const
 {
     return RoomType::Vip;
 }
-ostream& operator<<(ostream& o, const VipRoom& room)
+ull VipRoom::GetStdPrice() const
 {
-    o << static_cast<const Room&>(room);
-    return o;
+    return VipRoom::stdRentPrice;
 }
+// ostream& operator<<(ostream& o, const VipRoom& room)
+// {
+//     o << static_cast<const Room&>(room);
+//     return o;
+// }

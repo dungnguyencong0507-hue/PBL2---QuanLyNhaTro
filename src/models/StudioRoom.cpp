@@ -1,6 +1,7 @@
-#include "StudioRoom.h"
+#include <StudioRoom.h>
 using namespace std;
-ull StudioRoom::stdRentPrice = 2500000;
+
+ull StudioRoom::stdRentPrice = 8000000;
 
 StudioRoom::StudioRoom(const string& id, const string& name, const int& capacity, const int& floor)
     : Room(id, name, capacity, floor)
@@ -18,13 +19,17 @@ RoomType StudioRoom::Type() const
 {
     return RoomType::Studio;
 }
+ull StudioRoom::GetStdPrice() const
+{
+    return StudioRoom::stdRentPrice;
+}
 
 ull StudioRoom::calcRent() const
 {
     return rentPrice; 
 }
-ostream& operator<<(ostream& o, const StudioRoom& room)
-{
-    o << static_cast<const Room&>(room);
-    return o;
-}
+// ostream& operator<<(ostream& o, const StudioRoom& room)
+// {
+//     o << static_cast<const Room&>(room);
+//    return o;
+// }
