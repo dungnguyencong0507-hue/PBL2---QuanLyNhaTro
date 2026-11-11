@@ -54,33 +54,66 @@ int main()
         Sleep(1000);
         system("cls");
 
-        MenuBox menu(10, 10, 40, "QUAN LY NHA TRO");
+        string dateStr;
+        SingleLineBox dateBox(10, 10, 40, "Ngay hien tai", dateStr);
+
+        MenuBox menu(dateBox.GetX(), dateBox.GetY() + dateBox.GetH(), 40, "QUAN LY NHA TRO");
         menu.AddOption("Quan ly phong");
         menu.AddOption("Quan ly khach thue");
         menu.AddOption("Quan ly hoa don va dien nuoc");
         // menu.AddOption("Bao cao tai chinh");
 
-        Console::Key k;
+        bool func = 0;
         int choice;
         menu.Draw();
-        while ((choice = menu(k)) != -1){
-            switch (choice){
-                case 0:
-                    ManageRooms(nhatro);
-                    break;
-                case 1:
-                    ManageTenants(nhatro);
-                    break;
-                case 2:
-                    ManageBills(nhatro);
-                    break;
-                default:
-                    break;
+        dateBox.Draw();
+        Console::Key key;
+        while (true){
+        try {
+            if (func == 0) {
+                dateBox(key);
+                if (key == Console::ESC) break;
+                if (key == Console::DOWN) func = 1;
+                if (key == Console::ENTER) {
+                    Nhatro::today = SToDate(dateStr);
+                    func = 1;
+                    dateBox.Quit();
+                }
+            }
+            if (func == 1) {
+                choice = menu(key);
+                if (key == Console::ESC) func = 0;
+                switch (choice){
+                    case 0:
+                        ManageRooms(nhatro);
+                        break;
+                    case 1:
+                        ManageTenants(nhatro);
+                        break;
+                    case 2:
+                        ManageBills(nhatro);
+                        break;
+                    default:
+                        break;
+                }
             }
             system("cls");
+            dateBox.Draw();
             menu.Draw();
         }
-
+        catch (const exception& error){
+            Console::Goto(menu.GetX(), menu.GetY() + menu.GetH());
+            Console::SetColor(Console::RED);
+            cerr << "\nLoi: " << error.what() << '\n';
+            system("pause");
+        }
+        catch (const char* error){
+            Console::Goto(menu.GetX(), menu.GetY() + menu.GetH());
+            Console::SetColor(Console::RED);
+            cerr << "\nLoi: " << error << '\n';
+            system("pause"); 
+        }
+        }
         ConsoleHandler(CTRL_CLOSE_EVENT);
     }
     catch (const exception& error){

@@ -349,6 +349,8 @@ void Room::CreateBill(const Month& month)
     
     bill.isPaid = false;
     this->monthlyBills.push_back(bill);
+    this->SetElectricEdition(false);
+    this->SetWaterEdition(false);
 }
 void Room::AddBill(MonthlyBill bill)
 {

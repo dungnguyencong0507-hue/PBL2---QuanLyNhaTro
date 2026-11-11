@@ -29,7 +29,6 @@ void ManageBills(Nhatro& nhatro)
     btnLink.AddRelation(INDEX, Console::UP, NAVIGATION);
     btnLink.AddRelation(GENERAL, Console::UP, NAVIGATION);
     btnLink.AddRelation(NAVIGATION, Console::DOWN, FUNCTION);
-    btnLink.AddRelation(NAVIGATION, Console::ENTER, FUNCTION);
 
     int page = 0, currPage = -1;
     Console::Key key = Console::OTHER;
@@ -75,6 +74,8 @@ void ManageBills(Nhatro& nhatro)
                 break;
             }
         }
+
+        if(key == Console::ESC) return;
 
         currPage = page;
         if (selection == NAVIGATION) page = navBox(key);
@@ -642,6 +643,7 @@ void ManageBillsInYear(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
             sBillsInYear = GetBills(year, rooms);
             SortBills(sortChoice, sBillsInYear);
             fBillsInYear = FilterBills(filterChoice, sBillsInYear);
+            dataBox.Draw();
             reload = false;
         }
         if (redraw) {
@@ -747,7 +749,7 @@ bool GetBillForm(MonthlyBill* bill, const string& title, bool add = 0) {
     billBox.AddField("Chi so nuoc moi", to_string(bill->newWaterIndex), "", " m3"); 
     billBox.AddField("Tien nuoc", to_string(Room::waterUnitPrice), 
         to_string(bill->waterCost) + " VND (Don gia: ", " VND/m3)");
-    billBox.AddChosenField("Da thanh toan", {"CHUA", "ROI"});
+    billBox.AddChosenField("Da thanh toan", {"CHUA", "ROI"}, bill->isPaid);
     billBox.Draw();
 
     ull oldElc, newElc, uElec, oldWtr, newWtr, uWtr;
@@ -788,8 +790,6 @@ bool GetBillForm(MonthlyBill* bill, const string& title, bool add = 0) {
             Console::SetColor(Console::WHITE);
             Console::ClearSegment(padding, billBox.GetY() + billBox.GetH(), 2, 100);
             Console::Goto(padding, billBox.GetY() + billBox.GetH());
-            cout << "Cap nhat hoa don thanh cong ";
-            system("pause");
             return true;
         }
     }
@@ -832,7 +832,7 @@ void UpdateBill(Room* room)
     int padding = 2;    
 
     string prepaidStr = to_string(room->GetPrepaid());
-    SingleLineBox prepaidBox(padding, padding + 3, 40, "Tien coc: ", prepaidStr);
+    SingleLineBox prepaidBox(padding, padding + 3, 40, "Tien coc", prepaidStr);
     
     const auto& bills = room->GetMonthlyBills();
     
@@ -849,6 +849,7 @@ void UpdateBill(Room* room)
     ButtonBox addBtn(padding, sortBox.GetY() + sortBox.GetH(), toolBarW, "TAO HOA DON");
     ButtonBox detailBtn(padding, addBtn.GetY() + addBtn.GetH(), toolBarW, "XEM VA CAP NHAT HOA DON");
     ButtonBox deleteBtn(padding, detailBtn.GetY() + detailBtn.GetH(), toolBarW, "XOA HOA DON");
+    ButtonBox allBtn(padding, deleteBtn.GetY() + deleteBtn.GetH(), toolBarW, "THANH TOAN TOAN BO");
 
     string fromM, toM;
     Month month1, month2;
@@ -869,20 +870,24 @@ void UpdateBill(Room* room)
         SORT,
         ADD,
         DETAIL,
-        REMOVE
+        REMOVE,
+        ALL
     };
     Action selection = FILTER;
 
-    InputHandler<Action> btnLink(NONE, REMOVE);
+    InputHandler<Action> btnLink(NONE, ALL);
     btnLink.AddRelation(FILTER, Console::UP, PREPAID);
     btnLink.AddRelation(SORT, Console::UP, FILTER);
     btnLink.AddRelation(ADD, Console::UP, SORT);
     btnLink.AddRelation(DETAIL, Console::UP, ADD);
     btnLink.AddRelation(REMOVE, Console::UP, DETAIL);
+    btnLink.AddRelation(ALL, Console::UP, REMOVE);
     btnLink.AddRelation(PREPAID, Console::DOWN, FILTER);
     btnLink.AddRelation(FILTER, Console::DOWN, SORT);
     btnLink.AddRelation(SORT, Console::DOWN, ADD);
     btnLink.AddRelation(ADD, Console::DOWN, DETAIL);
+    btnLink.AddRelation(DETAIL, Console::DOWN, REMOVE);
+    btnLink.AddRelation(REMOVE, Console::DOWN, ALL);
     btnLink.AddRelation(TO, Console::LEFT, FROM);
     btnLink.AddRelation(FROM, Console::LEFT, FILTER);
     btnLink.AddRelation(FROM, Console::RIGHT, TO);
@@ -891,6 +896,7 @@ void UpdateBill(Room* room)
     btnLink.AddRelation(ADD, Console::RIGHT, FROM);
     btnLink.AddRelation(DETAIL, Console::RIGHT, FROM);
     btnLink.AddRelation(REMOVE, Console::RIGHT, FROM);
+    btnLink.AddRelation(ALL, Console::RIGHT, FROM);
 
     bool redraw = true;
     bool reload = true;
@@ -934,6 +940,7 @@ void UpdateBill(Room* room)
             addBtn.Draw();
             deleteBtn.Draw();
             detailBtn.Draw();
+            allBtn.Draw();
             dataBox.Draw();
             redraw = false;
         }
@@ -989,6 +996,13 @@ void UpdateBill(Room* room)
                 key = Console::OTHER;
             }
         } 
+        if (selection == ALL) {
+            bool result = allBtn(key);
+            if (result) {
+                for (auto& bill : sBills) bill->isPaid = true;
+                dataBox.Draw();
+            }
+        }
         if (selection == FROM) {
             fromBox(key);
             if (key == Console::ENTER && !fromM.empty()) {
