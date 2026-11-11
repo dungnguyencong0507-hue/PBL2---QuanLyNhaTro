@@ -398,25 +398,26 @@ class WarningBox : public Box
     bool choice = 1;
 
     int WrapedText(int start, const string& question) {
-        if (start >= int(question.size())) return -1;
-        int length = this->w - 2;
-        if (length > int(question.size()) - start) {
-            return int(question.size()) - start;
-        }
-        while (length > 0 && question[start + length] != ' ') length--;
-        if (length == 0) {
-            return this->w - 2;
-        }
-        return length;
+        if (start >= int(question.size())) return 0;
+        int width = max(1, this->w - 2);
+        int remaining = int(question.size()) - start;
+        if (remaining <= width) return remaining;
+
+        int breakAt = int(question.rfind(' ', start + width - 1));
+        if (breakAt >= start) return breakAt - start;
+        return width;
     }
 public:
     WarningBox(int x, int y, int w, string title, string warning, string confirm = "YES", string reject = "NO")
         : Box(x, y, w, 5, title), labelY(confirm), labelN(reject) {
             this->borderType = 1;
-            int curr = 0, len = this->WrapedText(curr, warning);
-            while (len != -1) {
+            int curr = 0;
+            while (curr < int(warning.size())) {
+                while (curr < int(warning.size()) && warning[curr] == ' ') curr++;
+                if (curr >= int(warning.size())) break;
+                int len = this->WrapedText(curr, warning);
                 this->line.push_back(warning.substr(curr, len));
-                len = this->WrapedText(curr, warning);
+                curr += len;
                 this->h ++;
             }
         }

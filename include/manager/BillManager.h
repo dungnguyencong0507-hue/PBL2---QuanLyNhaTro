@@ -9,8 +9,11 @@
 #define BILL_MONTH_W 8
 #define BILL_QUANT_W 8
 #define BILL_PAYER_W 18
-#define BILL_COST_W 8
+#define BILL_COST_W 10
+#define BILL_Y_COST_W 8
 #define BILL_STATUS_W 15
+
+#define INDEX_W 15
 
 struct BillInMonth {
     Room* room;
@@ -29,7 +32,8 @@ void CreateBills(Nhatro&, Month);
 void AddBill(Room*, Month = Nhatro::today);
 void UpdateBill(MonthlyBill*);
 void UpdateBill(Room*);
-void UpdateIndex(Nhatro&);
+void UpdateIndex(Room*);
+void ManageIndex(Nhatro&, NavigationBox&, Console::Key&);
 void UpdateGeneralPrice(NavigationBox&, Console::Key&);
 void ShowFinanceReport(Nhatro&);
 
@@ -79,3 +83,8 @@ void RoomBillTableInit(int x, int y);
 void RoomBillTableEnd(int x, int y);
 int RoomBillTableWidth();
 void RoomBillTableShow(MonthlyBill* const&);
+
+void IndexTableInit(int x, int y);
+void IndexTableEnd(int x, int y);
+int IndexTableWidth();
+void IndexTableShow(Room* const&);

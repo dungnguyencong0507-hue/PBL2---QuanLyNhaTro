@@ -3,7 +3,7 @@
 
 class BasicRoom : public Room
 {
-private:
+public:
     static ull stdRentPrice;
 public:
     BasicRoom(const std::string& id = "100", const std::string& name = "Phong 1", const int& capacity = 5, const int& floor = 1);

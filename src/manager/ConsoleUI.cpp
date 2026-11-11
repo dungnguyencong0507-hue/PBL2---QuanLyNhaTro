@@ -1,13 +1,6 @@
 #include <ConsoleUI.h>
 using namespace std;
 
-inline string center(const string& text, int width) {
-    int len = text.size();
-    if (len >= width) return text;
-    int pad = (width - len) / 2;
-    return string(pad, ' ') + text + string(width - len - pad, ' ');
-}
-
 void Box::DrawBorder() const 
 {
     Console::SetColor(this->borderColor);
@@ -525,6 +518,11 @@ bool WarningBox::operator()()
             this->isUsed = false;
             Console::SetColor(Console::WHITE);
             return this->choice;
+        }
+        else if (key == Console::ESC) {
+            this->isUsed = false;
+            Console::SetColor(Console::WHITE);
+            return false;
         }
         else if (key == Console::LEFT && this->choice == 0) this->choice = 1;
         else if (key == Console::RIGHT && this->choice == 1) this->choice = 0;

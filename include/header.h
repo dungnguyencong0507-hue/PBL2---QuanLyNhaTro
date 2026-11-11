@@ -83,4 +83,11 @@ inline string postsub(int width, const string& s)
     return s.substr(s.size() - width, width);
 }
 
+inline string center(const string& text, int width) {
+    int len = text.size();
+    if (len >= width) return text;
+    int pad = (width - len) / 2;
+    return string(pad, ' ') + text + string(width - len - pad, ' ');
+}
+
 string operator++(string& id);

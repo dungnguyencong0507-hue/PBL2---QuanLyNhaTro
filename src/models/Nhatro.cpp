@@ -170,12 +170,68 @@ int Nhatro::FindTenant(const std::string& id)
     return -1;
 }
 
+void Nhatro::LoadGeneralData(const string& generalFile)
+{
+    ifstream inp("data/" + generalFile);
+    if (!inp) throw runtime_error("Khong the tai file gia chung!");
+
+    string line, internet, trash, service, uElec, uWater, basic, vip, studio;
+    while (getline(inp, line)){
+        if (line.empty()) continue;
+        if (line.back() == '\r') line.pop_back();
+
+        istringstream iss(line);
+        getline(iss, internet, '|');
+        getline(iss, trash, '|');
+        getline(iss, service, '|');
+        getline(iss, uElec, '|');
+        getline(iss, uWater, '|');
+        getline(iss, basic, '|');
+        getline(iss, vip, '|');
+        getline(iss, studio);
+
+    try {
+        Room::internetCost = stoull(internet);
+        Room::trashCost = stoull(trash);
+        Room::serviceCost = stoull(service);
+        Room::electricUnitPrice = stoull(uElec);
+        Room::waterUnitPrice = stoull(uWater);
+        BasicRoom::stdRentPrice = stoull(basic);
+        VipRoom::stdRentPrice = stoull(vip);
+        StudioRoom::stdRentPrice = stoull(studio);
+    }
+    catch (const exception& e) {
+        cout << e.what() << endl;
+    }
+    catch (const char* e) {
+        cout << e << endl;
+    }
+    catch (const string& e) {
+        cout << e << endl;
+    }
+    }
+}
+void Nhatro::SaveGeneralData(const string& generalFile) const
+{
+    ofstream oup("data/" + generalFile);
+    if (!oup) throw runtime_error("Khong the luu file du lieu gia chung!");
+    oup << Room::internetCost << "|"
+        << Room::trashCost << "|"
+        << Room::serviceCost << "|"
+        << Room::electricUnitPrice << "|"
+        << Room::waterUnitPrice << "|"
+        << BasicRoom::stdRentPrice << "|"
+        << VipRoom::stdRentPrice << "|"
+        << StudioRoom::stdRentPrice ;
+}
+
 void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFile, const std::string& furnishingFile, const std::string& damageFile)
 {
     ifstream roomInp("data/" + roomFile);
     if (!roomInp) throw runtime_error("Khong the tai file du lieu phong!");
 {
-    string line, id, type, name, cap, floor, rentPrice, prepaid, oldElec, newElec, oldWater, newWater, rentDate;
+    string line, id, type, name, cap, floor, rentPrice, prepaid, oldElec, newElec, editElec,
+    oldWater, newWater, editWater, rentDate;
     while (getline(roomInp, line)){
         if (line.empty()) continue;
         if (line.back() == '\r') line.pop_back();
@@ -190,8 +246,10 @@ void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFi
         getline(iss, prepaid, '|');
         getline(iss, oldElec, '|');
         getline(iss, newElec, '|');
+        getline(iss, editElec, '|');
         getline(iss, oldWater, '|');
         getline(iss, newWater, '|');
+        getline(iss, editWater, '|');
         getline(iss, rentDate);
 
     try {
@@ -211,8 +269,10 @@ void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFi
         newRoom->SetPrepaid(stoull(prepaid));
         newRoom->SetElectricIndex(stoull(oldElec));
         newRoom->SetElectricIndex(stoull(newElec));
+        newRoom->SetElectricEdition(editElec == "1");
         newRoom->SetWaterIndex(stoull(oldWater));
         newRoom->SetWaterIndex(stoull(newWater));
+        newRoom->SetWaterEdition(editWater == "1");
         if (!rentDate.empty()) newRoom->SetDate(Date(rentDate));
 
         this->AddRoom(move(newRoom));
@@ -374,8 +434,10 @@ void Nhatro::SaveRoomData(const std::string& roomFile, const std::string& billFi
                 << room->GetPrepaid()   << "|"
                 << room->GetOldElectricIndex() << "|"
                 << room->GetNewElectricIndex() << "|"
+                << room->IsElectricEditable()  << "|"
                 << room->GetOldWaterIndex()    << "|"
                 << room->GetNewWaterIndex()    << "|"
+                << room->IsWaterEditable()  << "|"
                 << room->GetDate()
                 << endl;
     }

@@ -3,7 +3,7 @@
 
 class StudioRoom : public Room
 {
-private:
+public:
     static ull stdRentPrice;
 public:
     StudioRoom(const std::string& id = "102", const std::string& name = "Phong 2", const int& capacity = 5, const int& floor = 1);

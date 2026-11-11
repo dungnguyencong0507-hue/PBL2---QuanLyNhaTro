@@ -644,7 +644,13 @@ void UpdateRoom(Nhatro& nhatro, Room* room)
                     if (isClick) {
                         int choice = roomTenantsBox(key);
                         if (choice != -1) {
-                            room->RemoveTenant(roomTenants[choice]);
+                            bool rmv = true;
+                            if (roomTenants[choice]->IsLeader()) {
+                                WarningBox rmvWrn(10, 10, 30, "CANH BAO", "Xac nhan xoa nguoi dai dien phong"
+                                , "XAC NHAN", "HUY");
+                                rmv = rmvWrn();
+                            }
+                            if (rmv) room->RemoveTenant(roomTenants[choice]);
                             redraw = true;
                         }
                     }
@@ -652,7 +658,11 @@ void UpdateRoom(Nhatro& nhatro, Room* room)
                 case CLEAR_TENANT:
                     isClick = clearTenantBtn(key);
                     if (isClick) {
-                        for (const auto& per : roomTenants) {
+                        bool clr = true;
+                        WarningBox clrWrn(10, 10, 30, "CANH BAO", "Xac nhan xoa toan bo nguoi thue"
+                        , "XAC NHAN", "HUY");
+                        if (room->IsRented()) clr = clrWrn();
+                        if (clr) for (const auto& per : roomTenants) {
                             room->RemoveTenant(per);
                         }
                         redraw = true;

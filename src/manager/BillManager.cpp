@@ -45,6 +45,9 @@ void ManageBills(Nhatro& nhatro)
             case 1:
                 ManageBillsInYear(nhatro, navBox, key);
                 break;
+            case 2:
+                ManageIndex(nhatro, navBox, key);
+                break;
             case 3:
                 UpdateGeneralPrice(navBox, key);
                 break;
@@ -61,6 +64,9 @@ void ManageBills(Nhatro& nhatro)
                 break;
             case YEAR_BILL:
                 ManageBillsInYear(nhatro, navBox, key);
+                break;
+            case INDEX:
+                ManageIndex(nhatro, navBox, key);
                 break;
             case GENERAL:
                 UpdateGeneralPrice(navBox, key);
@@ -109,7 +115,144 @@ void ManageBills(Nhatro& nhatro)
     }
 }
 
-void UpdateIndex(Nhatro& nhatro);
+void ManageIndex(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
+{
+    // NHAP MOI, CHINH SUA, CHOT SO
+    int toolBarW = 32;
+    int padding = 2;    
+    
+    const auto& rooms = nhatro.GetRooms();
+    int startX = navBox.GetX(), startY = navBox.GetY() + navBox.GetH();
+    
+    ButtonBox updateBtn(startX, navBox.GetY() + navBox.GetH(), toolBarW, "NHAP VA CHINH SUA");
+
+    List<Room*> roomTable;
+    for (const auto& room : rooms) roomTable.push_back(room.get());
+    TableBox<Room*> dataBox(padding*2 + toolBarW, startY + 2, 
+    IndexTableWidth(), roomTable, IndexTableInit, IndexTableEnd, IndexTableShow);
+    
+    enum Action {
+        NONE,
+        NAVIGATION,
+        UPDATE
+    };
+    Action selection = NAVIGATION;
+
+    InputHandler<Action> btnLink(NONE, UPDATE);
+    btnLink.AddRelation(NAVIGATION, Console::DOWN, UPDATE);
+    btnLink.AddRelation(UPDATE, Console::UP, NAVIGATION);
+
+    bool redraw = 1;
+    selection = btnLink.GetDest(selection, key);
+    
+    while (true) {
+    try {
+        if (redraw) {
+            system("cls");
+            navBox.Draw();
+            updateBtn.Draw();
+            dataBox.Draw();
+            redraw = false;
+        }
+
+        if (selection == UPDATE) {
+            bool result = updateBtn(key);
+            if (result) {
+                int index = dataBox(key);
+                if (index != -1) {
+                    UpdateIndex(roomTable[index]);
+                    redraw = true;
+                }
+                key = Console::OTHER;
+            }
+        } 
+
+        if (key == Console::ESC) break;
+        selection = btnLink.GetDest(selection, key);
+        
+        if (selection == NAVIGATION) break;
+    }
+    catch (const exception& e) {
+        Console::Goto(padding, 0);
+        Console::SetColor(Console::LIGHT_RED);
+        cout << e.what() << " ";
+        system("pause");
+        redraw = true;
+    }
+    catch (const char* e) {
+        Console::Goto(padding, 0);
+        Console::SetColor(Console::LIGHT_RED);
+        cout << e << " ";
+        system("pause");
+        redraw = true;
+    }
+    }
+    key = Console::UP;
+}
+void UpdateIndex(Room* room)
+{
+    system("cls");
+    int padding =3;
+    FormBox indexBox(3, 3, 70, 0.5, "THONG TIN CHI SO DIEN NUOC");
+    if (room->IsElectricEditable()) 
+        indexBox.AddField("Chinh sua chi so dien", to_string(room->GetNewElectricIndex()),
+        to_string(room->GetOldElectricIndex()) + " -> ", " kWh");
+    else indexBox.AddField("Nhap chi so dien moi", "",
+        to_string(room->GetOldElectricIndex()) + " -> " + to_string(room->GetNewElectricIndex()) + " -> ", " kWh");
+
+    if (room->IsWaterEditable()) 
+        indexBox.AddField("Chinh sua chi so nuoc", to_string(room->GetNewWaterIndex()),
+        to_string(room->GetOldWaterIndex()) + " -> ", " kWh");
+    else indexBox.AddField("Nhap chi so nuoc moi", "",
+        to_string(room->GetOldWaterIndex()) + " -> " + to_string(room->GetNewWaterIndex()) + " -> ", " m3");
+
+    indexBox.Draw();
+
+    while(true) {
+    while (true) {
+    try {
+        Console::Key key;
+        bool confirm = indexBox(key);
+        if (key == Console::ESC) return;
+        if (confirm) {
+            if (room->IsElectricEditable()) {
+                room->EditElectricIndex(SToULL(indexBox.GetValue(0)));
+            } else room->SetElectricIndex(SToULL(indexBox.GetValue(0)));
+
+            if (room->IsWaterEditable()) {
+                room->EditWaterIndex(SToULL(indexBox.GetValue(1)));
+            } else room->SetWaterIndex(SToULL(indexBox.GetValue(1)));
+
+            return;
+        }
+    }
+    catch (const exception& e) {
+        Console::ClearSegment(padding, indexBox.GetY() + indexBox.GetH(), 1, 100);
+        Console::Goto(padding, indexBox.GetY() + indexBox.GetH());
+        Console::SetColor(Console::RED);
+        cout << e.what();
+    }
+    catch (const char* e) {
+        Console::ClearSegment(padding, indexBox.GetY() + indexBox.GetH(), 1, 100);
+        Console::Goto(padding, indexBox.GetY() + indexBox.GetH());
+        Console::SetColor(Console::RED);
+        cout << e;
+    }
+    catch (const string& e) {
+        Console::ClearSegment(padding, indexBox.GetY() + indexBox.GetH(), 1, 100);
+        Console::Goto(padding, indexBox.GetY() + indexBox.GetH());
+        Console::SetColor(Console::RED);
+        cout << e;
+    }
+    catch (...) {
+        Console::ClearSegment(padding, indexBox.GetY() + indexBox.GetH(), 1, 100);
+        Console::Goto(padding, indexBox.GetY() + indexBox.GetH());
+        Console::SetColor(Console::RED);
+        cout << "Loi khong xac dinh";
+    }
+    }
+    }
+}
 void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key)
 {
     enum Action {
@@ -122,18 +265,21 @@ void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key)
     btnLink.AddRelation(NAVIGATION, Console::DOWN, PRICE);
 
     int padding = navBox.GetX();
-    FormBox priceBox(navBox.GetX(), navBox.GetY() + navBox.GetH() + 1, 50, 0.6, "BANG GIA CHUNG");
+    FormBox priceBox(navBox.GetX(), navBox.GetY() + navBox.GetH() + 1, 70, 0.6, "BANG GIA CHUNG");
     priceBox.AddField("Don gia dien", to_string(Room::electricUnitPrice), "", " VND/kWh");
     priceBox.AddField("Don gia nuoc", to_string(Room::waterUnitPrice), "", " VND/m3");
     priceBox.AddField("Gia cuoc Internet", to_string(Room::internetCost), "", " VND/phong");
     priceBox.AddField("Don gia dich vu", to_string(Room::serviceCost), "", " VND/nguoi");
     priceBox.AddField("Phi rac thai", to_string(Room::trashCost), "", " VND/nguoi");
+    priceBox.AddField("Gia thue chung phong CO BAN", to_string(BasicRoom::stdRentPrice), "", " VND");
+    priceBox.AddField("Gia thue chung phong VIP", to_string(VipRoom::stdRentPrice), "", " VND");
+    priceBox.AddField("Gia thue chung phong STUDIO", to_string(StudioRoom::stdRentPrice), "", " VND");
     system("cls");
     navBox.Draw();
     priceBox.Draw();
 
     selection = btnLink.GetDest(selection, key);
-    ull uElec, uWtr, inte, serv, trash;
+    ull uElec, uWtr, inte, serv, trash, basic, vip, studio;
     while (selection == PRICE) {
     try {
         bool confirm = priceBox(key);
@@ -144,19 +290,25 @@ void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key)
             inte = SToULL(priceBox.GetValue(2));
             serv = SToULL(priceBox.GetValue(3));
             trash = SToULL(priceBox.GetValue(4));
+            basic = SToULL(priceBox.GetValue(5));
+            vip = SToULL(priceBox.GetValue(6));
+            studio = SToULL(priceBox.GetValue(7));
 
             Room::electricUnitPrice = uElec;
             Room::waterUnitPrice = uWtr;
             Room::internetCost = inte;
             Room::serviceCost = serv;
             Room::trashCost = trash;
+            BasicRoom::stdRentPrice = basic;
+            VipRoom::stdRentPrice = vip;
+            StudioRoom::stdRentPrice = studio;
 
             Console::SetColor(Console::WHITE);
             Console::ClearSegment(padding, priceBox.GetY() + priceBox.GetH(), 2, 100);
             Console::Goto(padding, priceBox.GetY() + priceBox.GetH());
             cout << "Cap nhat bang gia thanh cong ";
             system("pause");
-            return;
+            break;
         }
     }
     catch (const exception& e) {
@@ -184,6 +336,7 @@ void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key)
         cout << "Loi khong xac dinh";
     }
     }
+    key = Console::UP;
 }
 
 void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
@@ -224,8 +377,8 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
     Month month = Nhatro::today;
     string monStr = to_string(month.month);
     string yearStr = to_string(month.year);
-    SingleLineBox monBox(searchBox.GetX() + searchBox.GetW(), startY, 10, "Thang", monStr);
-    SingleLineBox yearBox(monBox.GetX() + monBox.GetW(), startY, 10, "Nam", yearStr);
+    SingleLineBox monBox(searchBox.GetX() + searchBox.GetW(), startY, 15, "Thang", monStr);
+    SingleLineBox yearBox(monBox.GetX() + monBox.GetW(), startY, 15, "Nam", yearStr);
 
     enum Action {
         NONE,
@@ -283,6 +436,7 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
     while (true) {
     try {
         if (reload) {
+
             sBillsInMonth = GetBills(month, rooms);
             SortBills(sortChoice, sBillsInMonth);
             fBillsInMonth = FilterBills(filterChoice, sBillsInMonth);
@@ -448,7 +602,7 @@ void ManageBillsInYear(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
 
     int year = Nhatro::today.year;
     string yearStr = to_string(year);
-    SingleLineBox yearBox(searchBox.GetX() + searchBox.GetW(), startY, 10, "Nam", yearStr);
+    SingleLineBox yearBox(searchBox.GetX() + searchBox.GetW(), startY, 15, "Nam", yearStr);
     enum Action {
         NONE,
         NAVIGATION,
@@ -541,7 +695,7 @@ void ManageBillsInYear(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
             yearBox(key);
             if (key == Console::ENTER) {
                 year = SToI(yearStr);
-                if (year <= Nhatro::today.year) reload = true;
+                reload = true;
             } 
         }
 
@@ -576,7 +730,7 @@ void CreateBills(Nhatro& nhatro, Month month)
 bool GetBillForm(MonthlyBill* bill, const string& title, bool add = 0) {
     system("cls");
     int padding = 3;
-    FormBox billBox(padding, padding, 50, 0.7, title);
+    FormBox billBox(padding, padding, 80, 0.6, title);
     billBox.AddConstField("Phong", bill->room->GetName());
     if (add) billBox.AddField("Ky thanh toan (MM/YYYY)", to_string(bill->month));
     else billBox.AddConstField("Ky thanh toan", to_string(bill->month));
@@ -937,7 +1091,6 @@ const MonthlyBill* UpperBound(const List<MonthlyBill>& bills, Month month)
 }
 List<BillInYear> GetBills(int year, const List<unique_ptr<Room>>& rooms)
 {
-    if (year > Nhatro::today.year) throw invalid_argument("So nam khong xac dinh");
     List<BillInYear> billsInYear(rooms.size(), {nullptr, List<MonthlyBill*>(12, nullptr)});
     for (int i=0; i < int(rooms.size()); i++) {
         billsInYear[i].room = rooms[i].get();
@@ -951,7 +1104,6 @@ List<BillInYear> GetBills(int year, const List<unique_ptr<Room>>& rooms)
 }
 List<BillInMonth> GetBills(Month month, const List<unique_ptr<Room>>& rooms)
 {
-    if (month > Nhatro::today) throw invalid_argument("Thang khong hop le");
     List<BillInMonth> billsInMonth(rooms.size());
     for (int i=0; i < rooms.size(); i++) {
         billsInMonth[i].room = rooms[i].get();
@@ -1144,21 +1296,19 @@ void BillInMonthTableInit(int x, int y)
     Console::Goto(x, y);
     cout << BORDER_TL 
         << Repeat(ROOM_ID_W, BORDER_H)     << BORDER_DT
-        << Repeat(BILL_PAYER_W, BORDER_H)  << BORDER_DT
         << Repeat(8, costCell.c_str())
         << Repeat(BILL_STATUS_W, BORDER_H) << BORDER_TR;
 
     Console::Goto(x, y+1);
     cout << left << BORDER_V
         << setw(ROOM_ID_W)      << "Ma phong"       << BORDER_V
-        << setw(BILL_PAYER_W)   << "Nguoi dai dien" << BORDER_V
-        << setw(BILL_COST_W)    << "Tien thue"      << BORDER_V
-        << setw(BILL_COST_W)    << "Tien rac"       << BORDER_V
-        << setw(BILL_COST_W)    << "Tien mang"      << BORDER_V
-        << setw(BILL_COST_W)    << "Dich vu"        << BORDER_V
-        << setw(BILL_COST_W)    << "Thiet hai"      << BORDER_V
-        << setw(BILL_COST_W)    << "Tien dien"      << BORDER_V
-        << setw(BILL_COST_W)    << "Tien nuoc"      << BORDER_V
+        << setw(BILL_COST_W)    << "TIEN PHONG"      << BORDER_V
+        << setw(BILL_COST_W)    << "TIEN RAC"       << BORDER_V
+        << setw(BILL_COST_W)    << "TIEN MANG"      << BORDER_V
+        << setw(BILL_COST_W)    << "TIEN D.VU"        << BORDER_V
+        << setw(BILL_COST_W)    << "THIET HAI"      << BORDER_V
+        << setw(BILL_COST_W)    << "TIEN DIEN"      << BORDER_V
+        << setw(BILL_COST_W)    << "TIEN NUOC"      << BORDER_V
         << setw(BILL_COST_W)    << "Tong cong"      << BORDER_V
         << setw(BILL_STATUS_W)  << "Trang thai"     << BORDER_V;
 
@@ -1166,7 +1316,6 @@ void BillInMonthTableInit(int x, int y)
     Console::Goto(x, y+2);
     cout << BORDER_RT 
         << Repeat(ROOM_ID_W, BORDER_H)     << BORDER_CROSS
-        << Repeat(BILL_PAYER_W, BORDER_H)  << BORDER_CROSS
         << Repeat(8, costCell.c_str())
         << Repeat(BILL_STATUS_W, BORDER_H) << BORDER_LT;
 }
@@ -1176,20 +1325,17 @@ void BillInMonthTableEnd(int x, int y)
     Console::Goto(x, y);
     cout << BORDER_BL 
         << Repeat(ROOM_ID_W, BORDER_H)     << BORDER_UT
-        << Repeat(BILL_PAYER_W, BORDER_H)  << BORDER_UT
         << Repeat(8, costCell.c_str())
         << Repeat(BILL_STATUS_W, BORDER_H) << BORDER_BR;
 }
 int BillInMonthTableWidth()
 {
-    return ROOM_ID_W + BILL_PAYER_W + 8*BILL_COST_W + BILL_STATUS_W + 12;
+    return ROOM_ID_W + 8*BILL_COST_W + BILL_STATUS_W + 11;
 }
 void BillInMonthTableShow(const BillInMonth& bill)
 {
     cout << left << BORDER_V
         << setw(ROOM_ID_W)      << bill.room->GetId()                                    << BORDER_V
-        << setw(BILL_PAYER_W)   << (bill.room->GetRoomLeader() ? 
-            postsub(BILL_PAYER_W, bill.room->GetRoomLeader()->GetName()) : "")          << BORDER_V
         << setw(BILL_COST_W)    << (bill.bill ? to_string(bill.bill->rentCost) : "")     << BORDER_V
         << setw(BILL_COST_W)    << (bill.bill ? to_string(bill.bill->trashCost) : "")    << BORDER_V
         << setw(BILL_COST_W)    << (bill.bill ? to_string(bill.bill->wifiCost) : "")     << BORDER_V
@@ -1203,43 +1349,43 @@ void BillInMonthTableShow(const BillInMonth& bill)
 
 void BillInYearTableInit(int x, int y)
 {
-    string costCell = Repeat(BILL_COST_W, BORDER_H) + BORDER_DT;
+    string costCell = Repeat(BILL_Y_COST_W, BORDER_H) + BORDER_DT;
     Console::Goto(x, y);
     cout << BORDER_TL 
         << Repeat(ROOM_ID_W, BORDER_H)    << BORDER_DT
         << Repeat(12, costCell.c_str())
-        << Repeat(BILL_COST_W, BORDER_H)  << BORDER_TR;
+        << Repeat(BILL_Y_COST_W, BORDER_H)  << BORDER_TR;
 
     Console::Goto(x, y+1);
     cout << left << BORDER_V << setw(ROOM_ID_W) << "Ma phong" << BORDER_V;
-    for (int i=1; i<=12; i++) cout << setw(BILL_COST_W) << "Thang " + to_string(i) << BORDER_V;
-    cout << setw(BILL_COST_W) << "Tong no" << BORDER_V;
+    for (int i=1; i<=12; i++) cout << setw(BILL_Y_COST_W) << "Thang " + to_string(i) << BORDER_V;
+    cout << setw(BILL_Y_COST_W) << "Tong no" << BORDER_V;
 
-    costCell = Repeat(BILL_COST_W, BORDER_H) + BORDER_CROSS;
+    costCell = Repeat(BILL_Y_COST_W, BORDER_H) + BORDER_CROSS;
     Console::Goto(x, y+2);
     cout << BORDER_RT 
         << Repeat(ROOM_ID_W, BORDER_H)    << BORDER_CROSS
         << Repeat(12, costCell.c_str())
-        << Repeat(BILL_COST_W, BORDER_H)  << BORDER_LT;
+        << Repeat(BILL_Y_COST_W, BORDER_H)  << BORDER_LT;
 }
 void BillInYearTableEnd(int x, int y)
 {
-    string costCell = Repeat(BILL_COST_W, BORDER_H) + BORDER_UT;
+    string costCell = Repeat(BILL_Y_COST_W, BORDER_H) + BORDER_UT;
     Console::Goto(x, y);
     cout << BORDER_BL 
         << Repeat(ROOM_ID_W, BORDER_H)    << BORDER_UT
         << Repeat(12, costCell.c_str())
-        << Repeat(BILL_COST_W, BORDER_H)  << BORDER_BR;
+        << Repeat(BILL_Y_COST_W, BORDER_H)  << BORDER_BR;
 }
 int BillInYearTableWidth()
 {
-    return ROOM_ID_W + 13*BILL_COST_W + 15;
+    return ROOM_ID_W + 13*BILL_Y_COST_W + 15;
 }
 void BillInYearTableShow(const BillInYear& bill)
 {
     cout << left << BORDER_V << setw(ROOM_ID_W) << bill.room->GetId() << BORDER_V;
     for (int i=0; i<bill.bills.size(); i++) {
-        cout << setw(BILL_COST_W);
+        cout << setw(BILL_Y_COST_W);
         if (bill.bills[i] == nullptr) {
             cout << "";
         }
@@ -1248,7 +1394,7 @@ void BillInYearTableShow(const BillInYear& bill)
         }
         cout << BORDER_V;
     }
-    cout << setw(BILL_COST_W) << (bill.room->GetDebt()) << BORDER_V;
+    cout << setw(BILL_Y_COST_W) << (bill.room->GetDebt()) << BORDER_V;
 }
 
 void RoomBillTableInit(int x, int y)
@@ -1263,13 +1409,13 @@ void RoomBillTableInit(int x, int y)
     Console::Goto(x, y+1);
     cout << left << BORDER_V
         << setw(BILL_MONTH_W)   << "Thang"          << BORDER_V
-        << setw(BILL_COST_W)    << "Tien thue"      << BORDER_V
-        << setw(BILL_COST_W)    << "Tien rac"       << BORDER_V
-        << setw(BILL_COST_W)    << "Tien mang"      << BORDER_V
-        << setw(BILL_COST_W)    << "Dich vu"        << BORDER_V
-        << setw(BILL_COST_W)    << "Thiet hai"      << BORDER_V
-        << setw(BILL_COST_W)    << "Tien dien"      << BORDER_V
-        << setw(BILL_COST_W)    << "Tien nuoc"      << BORDER_V
+        << setw(BILL_COST_W)    << "$ PHONG"      << BORDER_V
+        << setw(BILL_COST_W)    << "$ RAC"       << BORDER_V
+        << setw(BILL_COST_W)    << "$ MANG"      << BORDER_V
+        << setw(BILL_COST_W)    << "$ D.VU"        << BORDER_V
+        << setw(BILL_COST_W)    << "$ HU HAI"      << BORDER_V
+        << setw(BILL_COST_W)    << "$ DIEN"      << BORDER_V
+        << setw(BILL_COST_W)    << "$ NUOC"      << BORDER_V
         << setw(BILL_COST_W)    << "Tong cong"      << BORDER_V
         << setw(BILL_STATUS_W)  << "Trang thai"     << BORDER_V;
 
@@ -1309,32 +1455,49 @@ void RoomBillTableShow(MonthlyBill* const& bill)
         << setw(BILL_STATUS_W)  << (bill->isPaid ? "Da thanh toan" : "Chua thanh toan") << BORDER_V;
 }
 
-inline ostream& operator<<(ostream& o, const MonthlyBill& bill)
+void IndexTableInit(int x, int y)
 {
-    o << "\nHoa don thang " << bill.month << endl;
-    o << BORDER_TL << Repeat(FIELD_W, BORDER_H)
-        << BORDER_DT << Repeat(COST_W, BORDER_H) << BORDER_TR
-        << endl;
-        
-    o << left 
-        << BORDER_V << setw(FIELD_W) << "Tien thue" << BORDER_V 
-        << setw(COST_W) << bill.rentCost << BORDER_V << endl
-        << BORDER_V << setw(FIELD_W) << "Tien dien" << BORDER_V 
-        << setw(COST_W) << bill.electricCost << BORDER_V << endl
-        << BORDER_V << setw(FIELD_W) << "Tien nuoc" << BORDER_V 
-        << setw(COST_W) << bill.waterCost << BORDER_V << endl
-        << BORDER_V << setw(FIELD_W) << "Phi dich vu" << BORDER_V 
-        << setw(COST_W) << bill.serviceCost << BORDER_V << endl
-        << BORDER_V << setw(FIELD_W) << "Phi hu hong" << BORDER_V 
-        << setw(COST_W) << bill.damageCost << BORDER_V << endl
-        << BORDER_V << setw(FIELD_W) << "Thanh tien" << BORDER_V 
-        << setw(COST_W) << bill.totalCost << BORDER_V << endl;
-    
-    o << BORDER_BL << Repeat(FIELD_W, BORDER_H)
-        << BORDER_UT << Repeat(COST_W, BORDER_H) << BORDER_BR;
-    o << "\nTrang thai: ";
-    if (bill.isPaid) o << "Da thanh toan | ngay" << bill.paymentDate;
-    else o << "Chua thanh toan";
-    o << endl;
-    return o;
+    string costCell = Repeat(INDEX_W, BORDER_H) + BORDER_DT;
+    Console::Goto(x, y);
+    cout << BORDER_TL 
+        << Repeat(ROOM_ID_W, BORDER_H)     << BORDER_DT
+        << Repeat(3, costCell.c_str())
+        << Repeat(INDEX_W, BORDER_H) << BORDER_TR;
+
+    Console::Goto(x, y+1);
+    cout << left << BORDER_V
+        << setw(ROOM_ID_W)      << "Ma phong"       << BORDER_V
+        << setw(INDEX_W)    << "So dien cu"      << BORDER_V
+        << setw(INDEX_W)    << "So dien moi"       << BORDER_V
+        << setw(INDEX_W)    << "So nuoc cu"      << BORDER_V
+        << setw(INDEX_W)    << "So nuoc moi"        << BORDER_V;
+
+    costCell = Repeat(INDEX_W, BORDER_H) + BORDER_CROSS;
+    Console::Goto(x, y+2);
+    cout << BORDER_RT 
+        << Repeat(ROOM_ID_W, BORDER_H)     << BORDER_CROSS
+        << Repeat(3, costCell.c_str())
+        << Repeat(INDEX_W, BORDER_H) << BORDER_LT;
+}
+void IndexTableEnd(int x, int y)
+{
+    string costCell = Repeat(INDEX_W, BORDER_H) + BORDER_UT;
+    Console::Goto(x, y);
+    cout << BORDER_BL 
+        << Repeat(ROOM_ID_W, BORDER_H)     << BORDER_UT
+        << Repeat(3, costCell.c_str())
+        << Repeat(INDEX_W, BORDER_H) << BORDER_BR;
+}
+int IndexTableWidth()
+{
+    return ROOM_ID_W + 4 * INDEX_W + 6;
+}
+void IndexTableShow(Room* const& room)
+{
+    cout << left << BORDER_V
+        << setw(ROOM_ID_W)      << room->GetId()       << BORDER_V
+       << center(to_string(room->GetOldElectricIndex()), INDEX_W)      << BORDER_V
+       << center(to_string(room->GetNewElectricIndex()), INDEX_W)      << BORDER_V
+       << center(to_string(room->GetOldWaterIndex()), INDEX_W)      << BORDER_V
+       << center(to_string(room->GetNewWaterIndex()), INDEX_W)      << BORDER_V;
 }

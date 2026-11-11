@@ -14,6 +14,7 @@ Nhatro* database = nullptr;
 void SaveData()
 {
     system("cls");
+    database->SaveGeneralData("General.txt");
     database->SaveRoomData("Room.txt", "Bill.txt", "Furnishing.txt", "Damage.txt");
     database->SaveTenantData("Tenant.txt");
 }
@@ -47,16 +48,17 @@ int main()
         Nhatro& nhatro = Nhatro::GetInstance();
         database = &nhatro;
 
+        nhatro.LoadGeneralData("General.txt");
         nhatro.LoadRoomData("Room.txt", "Bill.txt", "Furnishing.txt", "Damage.txt");
         nhatro.LoadTenantData("Tenant.txt");
         Sleep(1000);
         system("cls");
 
-        MenuBox menu(2, 1, 38, "QUAN LY NHA TRO");
+        MenuBox menu(10, 10, 40, "QUAN LY NHA TRO");
         menu.AddOption("Quan ly phong");
         menu.AddOption("Quan ly khach thue");
         menu.AddOption("Quan ly hoa don va dien nuoc");
-        menu.AddOption("Bao cao tai chinh");
+        // menu.AddOption("Bao cao tai chinh");
 
         Console::Key k;
         int choice;
@@ -72,7 +74,7 @@ int main()
                 case 2:
                     ManageBills(nhatro);
                     break;
-                case 3:
+                default:
                     break;
             }
             system("cls");

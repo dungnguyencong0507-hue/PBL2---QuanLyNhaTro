@@ -62,6 +62,9 @@ public:
     int FindTenant(const string&);
     friend ostream& operator<<(ostream&, const Nhatro&);
 
+    void LoadGeneralData(const string&);
+    void SaveGeneralData(const string&) const;
+
     void LoadRoomData(const string&, const string&, const string&, const string&);
     void SaveRoomData(const string&, const string&, const string&, const string&);
 

@@ -99,6 +99,14 @@ ull Room::GetNewWaterIndex() const
 {
     return this->newWaterIndex;
 }
+bool Room::IsElectricEditable() const
+{
+    return this->elcEditable;
+}
+bool Room::IsWaterEditable() const
+{
+    return this->wtrEditable;
+}
 
 // ===============================
 //             SETTER
@@ -176,6 +184,7 @@ void Room::SetElectricIndex(const ull& index)
         throw runtime_error("Chi so dien moi phai lon hon chi so dien cu: " + this->newElectricIndex);
     this->oldElectricIndex = this->newElectricIndex;
     this->newElectricIndex = index;
+    this->elcEditable = true;
 }
 void Room::SetWaterIndex(const ull& index)
 {
@@ -183,18 +192,29 @@ void Room::SetWaterIndex(const ull& index)
         throw runtime_error("Chi so nuoc moi phai lon hon chi so nuoc cu: " + this->newWaterIndex);
     this->oldWaterIndex = this->newWaterIndex;
     this->newWaterIndex = index;
+    this->wtrEditable = true;
 }
 void Room::EditElectricIndex(const ull& index)
 {
+    if (!this->elcEditable) throw runtime_error("Khong duoc sua chi so dien");
     if (index < this->oldElectricIndex) 
         throw runtime_error("Chi so dien moi phai lon hon chi so dien cu: " + this->oldElectricIndex);
     this->newElectricIndex = index;
 }
 void Room::EditWaterIndex(const ull& index)
 {
+    if (!this->wtrEditable) throw runtime_error("Khong duoc sua chi so nuoc");
     if (index < this->oldWaterIndex) 
         throw runtime_error("Chi so nuoc moi phai lon hon chi so nuoc cu: " + this->oldWaterIndex);
     this->newWaterIndex = index;
+}
+void Room::SetElectricEdition(bool editable)
+{
+    this->elcEditable = editable;
+}
+void Room::SetWaterEdition(bool editable)
+{
+    this->wtrEditable = editable;
 }
 
 // ===============================
