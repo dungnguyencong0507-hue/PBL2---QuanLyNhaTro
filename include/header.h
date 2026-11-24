@@ -10,6 +10,12 @@ using std::string;
 
 using ull = unsigned long long;
 
+enum Gender
+{
+    Male,
+    Female
+};
+
 #define ROOM_TYPE_W         12
 #define ROOM_ID_W           8
 #define ROOM_NAME_W         25
@@ -31,7 +37,7 @@ using ull = unsigned long long;
 #define COST_W 10
 
 #define F_ID_W 8
-#define F_NAME_W 15
+#define F_NAME_W 25
 #define F_PRICE_W 15
 
 #define DAM_DATE_W 10

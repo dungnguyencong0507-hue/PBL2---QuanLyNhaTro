@@ -15,122 +15,65 @@ void ManageBills(Nhatro& nhatro)
     enum Action {
         NONE,
         NAVIGATION,
-        FUNCTION,
-        MONTH_BILL,
-        YEAR_BILL,
-        INDEX,
-        GENERAL
+        FUNCTION
     };
     Action selection = NAVIGATION;
 
-    InputHandler<Action> btnLink(NONE, GENERAL);
-    btnLink.AddRelation(MONTH_BILL, Console::UP, NAVIGATION);
-    btnLink.AddRelation(YEAR_BILL, Console::UP, NAVIGATION);
-    btnLink.AddRelation(INDEX, Console::UP, NAVIGATION);
-    btnLink.AddRelation(GENERAL, Console::UP, NAVIGATION);
+    InputHandler<Action> btnLink(NONE, FUNCTION);
+    btnLink.AddRelation(FUNCTION, Console::UP, NAVIGATION);
     btnLink.AddRelation(NAVIGATION, Console::DOWN, FUNCTION);
 
     int page = 0, currPage = -1;
     Console::Key key = Console::OTHER;
+    string error;
     
     while (true) {
+    if (!error.empty()) {
+        Console::DrawManagerError(error, navBox.GetX(), navBox.GetY() - 1);
+        error.clear();
+    }
     try {
-        if (page != currPage) {
-            switch (page)
-            {
-            case 0:
-                ManageBillsInMonth(nhatro, navBox, key);
-                break;
-            case 1:
-                ManageBillsInYear(nhatro, navBox, key);
-                break;
-            case 2:
-                ManageIndex(nhatro, navBox, key);
-                break;
-            case 3:
-                UpdateGeneralPrice(navBox, key);
-                break;
-            default:
-                break;
-            }
-        }
-
-        if (selection != NAVIGATION) {
-            switch (selection)
-            {
-            case MONTH_BILL:
-                ManageBillsInMonth(nhatro, navBox, key);
-                break;
-            case YEAR_BILL:
-                ManageBillsInYear(nhatro, navBox, key);
-                break;
-            case INDEX:
-                ManageIndex(nhatro, navBox, key);
-                break;
-            case GENERAL:
-                UpdateGeneralPrice(navBox, key);
-                break;
-            default:
-                break;
-            }
+        switch (page)
+        {
+        case 0:
+            ManageBillsInMonth(nhatro, navBox, key, (selection == NAVIGATION && page != currPage));
+            break;
+        case 1:
+            ManageBillsInYear(nhatro, navBox, key, (selection == NAVIGATION && page != currPage));
+            break;
+        case 2:
+            ManageIndex(nhatro, navBox, key, (selection == NAVIGATION && page != currPage));
+            break;
+        case 3:
+            UpdateGeneralPrice(navBox, key, (selection == NAVIGATION && page != currPage));
+            break;
+        default:
+            break;
         }
 
         if(key == Console::ESC) return;
-
         currPage = page;
         if (selection == NAVIGATION) page = navBox(key);
-
         selection = btnLink.GetDest(selection, key);
-        if (selection == FUNCTION) {
-            switch (page)
-            {
-            case 0:
-                selection = MONTH_BILL;
-                break;
-            case 1:
-                selection = YEAR_BILL;
-                break;
-            case 2:
-                selection = INDEX;
-                break;
-            case 3:
-                selection = GENERAL;
-                break;
-            default:
-                break;
-            }
-        }
     }
     catch (const exception& e) {
-        Console::Goto(padding, padding);
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e.what() << " ";
-        system("pause");
+        error = e.what();
     }
     catch (const string& e) {
-        Console::Goto(padding, padding);
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e << " ";
-        system("pause");
+        error = e;
     }
     }
 }
 
-void ManageIndex(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
+void ManageIndex(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key, bool redraw)
 {
-    // NHAP MOI, CHINH SUA, CHOT SO
-    int toolBarW = 32;
-    int padding = 2;    
-    
     const auto& rooms = nhatro.GetRooms();
     int startX = navBox.GetX(), startY = navBox.GetY() + navBox.GetH();
     
-    ButtonBox updateBtn(startX, navBox.GetY() + navBox.GetH(), toolBarW, "NHAP VA CHINH SUA");
-
     List<Room*> roomTable;
     for (const auto& room : rooms) roomTable.push_back(room.get());
-    TableBox<Room*> dataBox(padding*2 + toolBarW, startY + 2, 
-    IndexTableWidth(), roomTable, IndexTableInit, IndexTableEnd, IndexTableShow);
+    TableBox<Room*> dataBox(startX, startY, 
+        IndexTableWidth(), roomTable, IndexTableInit, IndexTableEnd, IndexTableShow);
     
     enum Action {
         NONE,
@@ -141,9 +84,8 @@ void ManageIndex(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
 
     InputHandler<Action> btnLink(NONE, UPDATE);
     btnLink.AddRelation(NAVIGATION, Console::DOWN, UPDATE);
-    btnLink.AddRelation(UPDATE, Console::UP, NAVIGATION);
 
-    bool redraw = 1;
+    string error;
     selection = btnLink.GetDest(selection, key);
     
     while (true) {
@@ -151,41 +93,30 @@ void ManageIndex(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
         if (redraw) {
             system("cls");
             navBox.Draw();
-            updateBtn.Draw();
             dataBox.Draw();
             redraw = false;
         }
+        if (!error.empty()) {
+            Console::DrawManagerError(error, startX, startY - 1);
+            error.clear();
+        }
 
         if (selection == UPDATE) {
-            bool result = updateBtn(key);
-            if (result) {
-                int index = dataBox(key);
-                if (index != -1) {
-                    UpdateIndex(roomTable[index]);
-                    redraw = true;
-                }
-                key = Console::OTHER;
+            int index = dataBox(key, true);
+            if (index != -1) {
+                redraw = true;
+                UpdateIndex(roomTable[index]);
             }
-        } 
-
+        }
+        if (selection == NAVIGATION) return;
         if (key == Console::ESC) break;
-        selection = btnLink.GetDest(selection, key);
-        
-        if (selection == NAVIGATION) break;
+        if (key == Console::F5) redraw = true;
     }
     catch (const exception& e) {
-        Console::Goto(padding, 0);
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e.what() << " ";
-        system("pause");
-        redraw = true;
+        error = e.what();
     }
     catch (const char* e) {
-        Console::Goto(padding, 0);
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e << " ";
-        system("pause");
-        redraw = true;
+        error = e;
     }
     }
     key = Console::UP;
@@ -194,7 +125,8 @@ void UpdateIndex(Room* room)
 {
     system("cls");
     int padding =3;
-    FormBox indexBox(3, 3, 70, 0.5, "THONG TIN CHI SO DIEN NUOC");
+    FormBox indexBox(3, 3, 90, 0.7, "THONG TIN CHI SO DIEN NUOC");
+    indexBox.AddConstField("Phong", room->GetName() + (room->IsRented() ? " (DANG CHO THUE)" : " (DANG BO TRONG)"));
     if (room->IsElectricEditable()) 
         indexBox.AddField("Chinh sua chi so dien", to_string(room->GetNewElectricIndex()),
         to_string(room->GetOldElectricIndex()) + " -> ", " kWh");
@@ -203,58 +135,43 @@ void UpdateIndex(Room* room)
 
     if (room->IsWaterEditable()) 
         indexBox.AddField("Chinh sua chi so nuoc", to_string(room->GetNewWaterIndex()),
-        to_string(room->GetOldWaterIndex()) + " -> ", " kWh");
+        to_string(room->GetOldWaterIndex()) + " -> ", " m3");
     else indexBox.AddField("Nhap chi so nuoc moi", "",
         to_string(room->GetOldWaterIndex()) + " -> " + to_string(room->GetNewWaterIndex()) + " -> ", " m3");
-
+    indexBox.GoToCenter();
     indexBox.Draw();
 
-    while(true) {
+    string error;
     while (true) {
+    if (!error.empty()) {
+        Console::DrawManagerError(error, padding, indexBox.GetY() + indexBox.GetH());
+        error.clear();
+    }
     try {
         Console::Key key;
         bool confirm = indexBox(key);
         if (key == Console::ESC) return;
         if (confirm) {
             if (room->IsElectricEditable()) {
-                room->EditElectricIndex(SToULL(indexBox.GetValue(0)));
-            } else room->SetElectricIndex(SToULL(indexBox.GetValue(0)));
+                room->EditElectricIndex(SToULL(indexBox.GetValue(1)));
+            } else room->SetElectricIndex(SToULL(indexBox.GetValue(1)));
 
             if (room->IsWaterEditable()) {
-                room->EditWaterIndex(SToULL(indexBox.GetValue(1)));
-            } else room->SetWaterIndex(SToULL(indexBox.GetValue(1)));
+                room->EditWaterIndex(SToULL(indexBox.GetValue(2)));
+            } else room->SetWaterIndex(SToULL(indexBox.GetValue(2)));
 
             return;
         }
     }
     catch (const exception& e) {
-        Console::ClearSegment(padding, indexBox.GetY() + indexBox.GetH(), 1, 100);
-        Console::Goto(padding, indexBox.GetY() + indexBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << e.what();
+        error = e.what();
     }
     catch (const char* e) {
-        Console::ClearSegment(padding, indexBox.GetY() + indexBox.GetH(), 1, 100);
-        Console::Goto(padding, indexBox.GetY() + indexBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << e;
-    }
-    catch (const string& e) {
-        Console::ClearSegment(padding, indexBox.GetY() + indexBox.GetH(), 1, 100);
-        Console::Goto(padding, indexBox.GetY() + indexBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << e;
-    }
-    catch (...) {
-        Console::ClearSegment(padding, indexBox.GetY() + indexBox.GetH(), 1, 100);
-        Console::Goto(padding, indexBox.GetY() + indexBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << "Loi khong xac dinh";
-    }
+        error = e;
     }
     }
 }
-void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key)
+void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key, bool redraw)
 {
     enum Action {
         NONE,
@@ -266,7 +183,7 @@ void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key)
     btnLink.AddRelation(NAVIGATION, Console::DOWN, PRICE);
 
     int padding = navBox.GetX();
-    FormBox priceBox(navBox.GetX(), navBox.GetY() + navBox.GetH() + 1, 70, 0.6, "BANG GIA CHUNG");
+    FormBox priceBox(navBox.GetX(), navBox.GetY() + navBox.GetH() + 1, 70, 0.45, "BANG GIA CHUNG");
     priceBox.AddField("Don gia dien", to_string(Room::electricUnitPrice), "", " VND/kWh");
     priceBox.AddField("Don gia nuoc", to_string(Room::waterUnitPrice), "", " VND/m3");
     priceBox.AddField("Gia cuoc Internet", to_string(Room::internetCost), "", " VND/phong");
@@ -275,16 +192,23 @@ void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key)
     priceBox.AddField("Gia thue chung phong CO BAN", to_string(BasicRoom::stdRentPrice), "", " VND");
     priceBox.AddField("Gia thue chung phong VIP", to_string(VipRoom::stdRentPrice), "", " VND");
     priceBox.AddField("Gia thue chung phong STUDIO", to_string(StudioRoom::stdRentPrice), "", " VND");
-    system("cls");
-    navBox.Draw();
-    priceBox.Draw();
+    if (redraw) {
+        system("cls");
+        navBox.Draw();
+        priceBox.Draw();
+    }
 
     selection = btnLink.GetDest(selection, key);
     ull uElec, uWtr, inte, serv, trash, basic, vip, studio;
+    string error;
     while (selection == PRICE) {
+    if (!error.empty()) {
+        Console::DrawManagerError(error, padding, priceBox.GetY() + priceBox.GetH());
+        error.clear();
+    }
     try {
         bool confirm = priceBox(key);
-        if (key == Console::ESC) return;
+        if (key == Console::ESC) break;
         if (confirm) {
             uElec = SToULL(priceBox.GetValue(0));
             uWtr = SToULL(priceBox.GetValue(1));
@@ -304,82 +228,58 @@ void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key)
             VipRoom::stdRentPrice = vip;
             StudioRoom::stdRentPrice = studio;
 
-            Console::SetColor(Console::WHITE);
-            Console::ClearSegment(padding, priceBox.GetY() + priceBox.GetH(), 2, 100);
-            Console::Goto(padding, priceBox.GetY() + priceBox.GetH());
-            cout << "Cap nhat bang gia thanh cong ";
-            system("pause");
             break;
         }
     }
     catch (const exception& e) {
-        Console::ClearSegment(padding, priceBox.GetY() + priceBox.GetH(), 1, 100);
-        Console::Goto(padding, priceBox.GetY() + priceBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << e.what();
+        error = e.what();
     }
     catch (const char* e) {
-        Console::ClearSegment(padding, priceBox.GetY() + priceBox.GetH(), 1, 100);
-        Console::Goto(padding, priceBox.GetY() + priceBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << e;
-    }
-    catch (const string& e) {
-        Console::ClearSegment(padding, priceBox.GetY() + priceBox.GetH(), 1, 100);
-        Console::Goto(padding, priceBox.GetY() + priceBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << e;
-    }
-    catch (...) {
-        Console::ClearSegment(padding, priceBox.GetY() + priceBox.GetH(), 1, 100);
-        Console::Goto(padding, priceBox.GetY() + priceBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << "Loi khong xac dinh";
+        error = e;
     }
     }
     key = Console::UP;
 }
 
-void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
+void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key, bool redraw)
 {
     int toolBarW = 32;
-    int searchBoxW = 50;
-    int padding = 2;    
+    int searchBoxW = 50;    
     
-    const auto& rooms = nhatro.GetRooms();
     int startX = navBox.GetX(), startY = navBox.GetY() + navBox.GetH();
     
     NumberMenuBox filterBox(startX, startY, toolBarW, "LOC THONG TIN HOA DON");
-    filterBox.AddOption("Tat ca hoa don");
-    filterBox.AddOption("Hoa don da thanh toan");
-    filterBox.AddOption("Hoa don chua thanh toan");
-    filterBox.AddOption("Phong co hoa don");
-    filterBox.AddOption("Phong khong co hoa don");
+    filterBox.AddOption("1. Tat ca hoa don");
+    filterBox.AddOption("2. Hoa don da thanh toan");
+    filterBox.AddOption("3. Hoa don chua thanh toan");
+    filterBox.AddOption("4. Phong co hoa don");
+    filterBox.AddOption("5. Phong khong co hoa don");
 
     NumberMenuBox sortBox(startX, filterBox.GetY() + filterBox.GetH(), toolBarW, "SAP XEP HOA DON");
-    sortBox.AddOption("Theo ma phong");
-    sortBox.AddOption("Ngay thanh toan moi nhat");
-    sortBox.AddOption("Tong hoa don tang dan");
-    sortBox.AddOption("Tong hoa don giam dan");
+    sortBox.AddOption("1. Theo ma phong");
+    sortBox.AddOption("2. Tong hoa don tang dan");
+    sortBox.AddOption("3. Tong hoa don giam dan");
 
-    ButtonBox addBtn(startX, sortBox.GetY() + sortBox.GetH(), toolBarW, "TAO HOA DON");
-    ButtonBox addAllBtn(startX, addBtn.GetY() + addBtn.GetH(), toolBarW, "TAO TOAN BO HOA DON");
-    ButtonBox detailBtn(startX, addAllBtn.GetY() + addAllBtn.GetH(), toolBarW, "XEM VA CAP NHAT HOA DON");
+    ButtonBox addAllBtn(startX, sortBox.GetY() + sortBox.GetH(), toolBarW, "TAO TOAN BO HOA DON");
+    ButtonBox deleteAllBtn(startX, addAllBtn.GetY() + addAllBtn.GetH(), toolBarW, "XOA TOAN BO HOA DON");
+    ButtonBox detailBtn(startX, deleteAllBtn.GetY() + deleteAllBtn.GetH(), toolBarW, "XEM VA CAP NHAT HOA DON");
     ButtonBox historyBtn(startX, detailBtn.GetY() + detailBtn.GetH(), toolBarW, "XEM LICH SU HOA DON");
-    ButtonBox deleteBtn(startX, detailBtn.GetY() + detailBtn.GetH(), toolBarW, "XOA HOA DON");
+    ButtonBox addBtn(startX, historyBtn.GetY() + historyBtn.GetH(), toolBarW, "TAO HOA DON THU CONG");
+    ButtonBox deleteBtn(startX, addBtn.GetY() + addBtn.GetH(), toolBarW, "XOA HOA DON");
     string searchValue = "";
-    SingleLineBox searchBox(padding*2 + toolBarW, startY, searchBoxW, "TIM KIEM", searchValue);
+    SingleLineBox searchBox(filterBox.GetX() + toolBarW + 1, startY, searchBoxW, "TIM KIEM", searchValue);
 
-    List<BillInMonth> sBillsInMonth;
-    List<BillInMonth> fBillsInMonth;
-    TableBox<BillInMonth> dataBox(padding*2 + toolBarW, searchBox.GetY() + searchBox.GetH() + 2, 
-    BillInMonthTableWidth(), fBillsInMonth, BillInMonthTableInit, BillInMonthTableEnd, BillInMonthTableShow);
+    static List<BillInMonth> sBillsInMonth;
+    static List<BillInMonth> fBillsInMonth;
+    TableBox<BillInMonth> dataBox(searchBox.GetX(), searchBox.GetY() + searchBox.GetH() + 2, 
+    BillInMonthTableWidth(), fBillsInMonth, BillInMonthTableInit, BillInMonthTableEnd, 
+    BillInMonthTableShow, BillInMonthTotal);
     
-    Month month = Nhatro::today;
+    static Month month = Month(Nhatro::today) - 1;
     string monStr = to_string(month.month);
     string yearStr = to_string(month.year);
-    SingleLineBox monBox(searchBox.GetX() + searchBox.GetW(), startY, 15, "Thang", monStr);
-    SingleLineBox yearBox(monBox.GetX() + monBox.GetW(), startY, 15, "Nam", yearStr);
+    SingleLineBox monBox(searchBox.GetX() + searchBox.GetW(), startY, 15, "THANG", monStr);
+    SingleLineBox yearBox(monBox.GetX() + monBox.GetW(), startY, 15, "NAM", yearStr);
 
     enum Action {
         NONE,
@@ -391,6 +291,7 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
         DETAIL,
         HISTORY,
         REMOVE,
+        REMOVEALL,
         MONTH,
         YEAR,
         SEARCH,
@@ -398,38 +299,44 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
     Action selection = NAVIGATION;
 
     InputHandler<Action> btnLink(NONE, SEARCH);
-    btnLink.AddRelation(NAVIGATION, Console::DOWN, FILTER);
-    btnLink.AddRelation(FILTER, Console::UP, NAVIGATION);
-    btnLink.AddRelation(SEARCH, Console::UP, NAVIGATION);
-    btnLink.AddRelation(MONTH, Console::UP, NAVIGATION);
-    btnLink.AddRelation(YEAR, Console::UP, NAVIGATION);
-    btnLink.AddRelation(SORT, Console::UP, FILTER);
-    btnLink.AddRelation(ADD, Console::UP, SORT);
-    btnLink.AddRelation(ADDALL, Console::UP, ADD);
-    btnLink.AddRelation(DETAIL, Console::UP, ADDALL);
-    btnLink.AddRelation(HISTORY, Console::UP, DETAIL);
-    btnLink.AddRelation(REMOVE, Console::UP, HISTORY);
-    btnLink.AddRelation(FILTER, Console::DOWN, SORT);
-    btnLink.AddRelation(SORT, Console::DOWN, ADD);
-    btnLink.AddRelation(ADD, Console::DOWN, ADDALL);
-    btnLink.AddRelation(ADDALL, Console::DOWN, DETAIL);
-    btnLink.AddRelation(DETAIL, Console::DOWN, HISTORY);
-    btnLink.AddRelation(HISTORY, Console::DOWN, REMOVE);
-    btnLink.AddRelation(FILTER, Console::RIGHT, SEARCH);
-    btnLink.AddRelation(SORT, Console::RIGHT, SEARCH);
-    btnLink.AddRelation(ADD, Console::RIGHT, SEARCH);
-    btnLink.AddRelation(ADDALL, Console::RIGHT, SEARCH);
-    btnLink.AddRelation(HISTORY, Console::RIGHT, SEARCH);
-    btnLink.AddRelation(DETAIL, Console::RIGHT, SEARCH);
-    btnLink.AddRelation(REMOVE, Console::RIGHT, SEARCH);
-    btnLink.AddRelation(SEARCH, Console::RIGHT, MONTH);
-    btnLink.AddRelation(MONTH, Console::RIGHT, YEAR);
-    btnLink.AddRelation(YEAR, Console::LEFT, MONTH);
-    btnLink.AddRelation(MONTH, Console::LEFT, SEARCH);
-    btnLink.AddRelation(SEARCH, Console::LEFT, FILTER);
+    btnLink.AddRelation(NAVIGATION, Console::DOWN,  FILTER);
+    btnLink.AddRelation(FILTER,     Console::UP,    NAVIGATION);
+    btnLink.AddRelation(SEARCH,     Console::UP,    NAVIGATION);
+    btnLink.AddRelation(MONTH,      Console::UP,    NAVIGATION);
+    btnLink.AddRelation(YEAR,       Console::UP,    NAVIGATION);
+    btnLink.AddRelation(SORT,       Console::UP,    FILTER);
+    btnLink.AddRelation(ADDALL,     Console::UP,    SORT);
+    btnLink.AddRelation(REMOVEALL,  Console::UP,    ADDALL);
+    btnLink.AddRelation(DETAIL,     Console::UP,    REMOVEALL);
+    btnLink.AddRelation(HISTORY,    Console::UP,    DETAIL);
+    btnLink.AddRelation(ADD,        Console::UP,    HISTORY);
+    btnLink.AddRelation(REMOVE,     Console::UP,    ADD);
+    btnLink.AddRelation(FILTER,     Console::DOWN,  SORT);
+    btnLink.AddRelation(SORT,       Console::DOWN,  ADDALL);
+    btnLink.AddRelation(ADDALL,     Console::DOWN,  REMOVEALL);
+    btnLink.AddRelation(REMOVEALL,  Console::DOWN,  DETAIL);
+    btnLink.AddRelation(DETAIL,     Console::DOWN,  HISTORY);
+    btnLink.AddRelation(HISTORY,    Console::DOWN,  ADD);
+    btnLink.AddRelation(ADD,        Console::DOWN,  REMOVE);
+    btnLink.AddRelation(FILTER,     Console::RIGHT, SEARCH);
+    btnLink.AddRelation(SORT,       Console::RIGHT, SEARCH);
+    btnLink.AddRelation(ADDALL,     Console::RIGHT, SEARCH);
+    btnLink.AddRelation(REMOVEALL,  Console::RIGHT, SEARCH);
+    btnLink.AddRelation(HISTORY,    Console::RIGHT, SEARCH);
+    btnLink.AddRelation(DETAIL,     Console::RIGHT, SEARCH);
+    btnLink.AddRelation(ADD,        Console::RIGHT, SEARCH);
+    btnLink.AddRelation(REMOVE,     Console::RIGHT, SEARCH);
+    btnLink.AddRelation(SEARCH,     Console::RIGHT, MONTH);
+    btnLink.AddRelation(MONTH,      Console::RIGHT, YEAR);
+    btnLink.AddRelation(YEAR,       Console::LEFT,  MONTH);
+    btnLink.AddRelation(MONTH,      Console::LEFT,  SEARCH);
+    btnLink.AddRelation(SEARCH,     Console::LEFT,  FILTER);
 
-    bool redraw = 1;
+    const auto& rooms = nhatro.GetRooms();
+
     bool reload = redraw;
+    bool cont = false;
+    string error;
     int filterChoice = 0;
     int sortChoice = 0;
     selection = btnLink.GetDest(selection, key);
@@ -437,43 +344,47 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
     while (true) {
     try {
         if (reload) {
-
             sBillsInMonth = GetBills(month, rooms);
             SortBills(sortChoice, sBillsInMonth);
             fBillsInMonth = FilterBills(filterChoice, sBillsInMonth);
-            dataBox.Draw();
             reload = false;
+            redraw = true;
         }
         if (redraw) {
             system("cls");
             navBox.Draw();
+            filterBox.Draw();
+            sortBox.Draw();
+            addAllBtn.Draw();
+            deleteAllBtn.Draw();
+            detailBtn.Draw();
+            historyBtn.Draw();
+            addBtn.Draw();
+            deleteBtn.Draw();
             searchBox.Draw();
             monBox.Draw();
             yearBox.Draw();
-            filterBox.Draw();
-            sortBox.Draw();
-            addBtn.Draw();
-            addAllBtn.Draw();
-            deleteBtn.Draw();
-            detailBtn.Draw();
-            historyBtn.Draw();
             dataBox.Draw();
             redraw = false;
+        }
+        if (!error.empty()) {
+            Console::DrawManagerError(error, searchBox.GetX(), searchBox.GetY() + searchBox.GetH());
+            error.clear();
         }
 
         if (selection == FILTER) {
             int choice = filterBox(key);
             if (choice != -1) {
-                fBillsInMonth = FilterBills(choice, fBillsInMonth);
-                dataBox.Draw();
+                fBillsInMonth = FilterBills(choice, sBillsInMonth);
+                redraw = true;
                 filterChoice = choice;
             }
         }
         if (selection == SORT) {
             int choice = sortBox(key);
             if (choice != -1) {
-                SortBills(choice, fBillsInMonth);
-                fBillsInMonth = FilterBills(filterChoice, fBillsInMonth);
+                SortBills(choice, sBillsInMonth);
+                fBillsInMonth = FilterBills(filterChoice, sBillsInMonth);
                 dataBox.Draw();
                 sortChoice = choice;
             } 
@@ -481,9 +392,10 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
         if (selection == ADD) {
             bool result = addBtn(key);
             if (result) {
-                int choice = dataBox(key);
+                int choice = dataBox(key, true);
                 if (choice != -1) {
-                    if (fBillsInMonth[choice].bill == nullptr) throw runtime_error("Thang nay da co hoa don");
+                    if (fBillsInMonth[choice].bill != nullptr) throw runtime_error("Thang nay da co hoa don");
+                    reload = true;
                     AddBill(fBillsInMonth[choice].room, month);
                 }
                 key = Console::OTHER;
@@ -492,47 +404,76 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
         if (selection == ADDALL) {
             bool result = addAllBtn(key);
             if (result) {
-                CreateBills(nhatro, month);
                 reload = true;
+                CreateBills(nhatro, month);
             }
         }
         if (selection == DETAIL) {
-            bool result = detailBtn(key);
+            bool result = true;
+            if (!cont) result = detailBtn(key);
             if (result) {
-                int index = dataBox(key);
+                int index = dataBox(key, cont);
                 if (index != -1) {
-                    UpdateBill(fBillsInMonth[index].bill);
+                    cont = true;
                     redraw = true;
+                    UpdateBill(fBillsInMonth[index].bill);
+                    SortBills(sortChoice, sBillsInMonth);
+                    fBillsInMonth = FilterBills(filterChoice, sBillsInMonth);
                 }
+                else cont = false;
                 key = Console::OTHER;
             }
         } 
         if (selection == HISTORY) {
-            bool result = historyBtn(key);
+            bool result = true;
+            if (!cont) result = historyBtn(key);
             if (result) {
-                int index = dataBox(key);
+                int index = dataBox(key, cont);
                 if (index != -1) {
+                    cont = true;
+                    reload = true;
                     UpdateBill(fBillsInMonth[index].room);
-                    redraw = true;
                 }
+                else cont = false;
                 key = Console::OTHER;
             }
         }
         if (selection == REMOVE) {
             bool result = deleteBtn(key);
             if (result) {
-                int index = dataBox(key);
+                int index = dataBox(key, true);
                 if (index != -1) {
-                    fBillsInMonth[index].room->RemoveBill(month);
-                    reload = true;
+                    bool confirm = false; 
+                    if (fBillsInMonth[index].bill != nullptr) {
+                        redraw = true;
+                        confirm = WarningBox::Warning(36, "CANH BAO", "Xac nhan xoa hoa don", "XAC NHAN", "HUY");
+                    }
+                    if (confirm) {
+                        fBillsInMonth[index].room->RemoveBill(month);
+                        reload = true;
+                    }
                 }
                 key = Console::OTHER;
+            }
+        }
+        if (selection == REMOVEALL) {
+            bool result = deleteAllBtn(key);
+            if (result) {
+                redraw = true;
+                bool confirm = WarningBox::Warning(36, "CANH BAO", 
+                    "Xac nhan xoa toan bo", "XAC NHAN", "HUY");
+                if (confirm) {
+                    for (auto& bim : fBillsInMonth) {
+                        if (bim.room) bim.room->RemoveBill(month);
+                    }
+                    reload = true;
+                }
             }
         }
         if (selection == SEARCH) {
             searchBox(key);
             if (key == Console::ENTER) {
-                fBillsInMonth = SearchBills(searchValue, fBillsInMonth);
+                fBillsInMonth = SearchBills(searchValue, sBillsInMonth);
                 dataBox.Draw();
             }
         }
@@ -552,58 +493,53 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
         }
 
         if (key == Console::ESC) break;
+        if (key == Console::F5) redraw = true;
         selection = btnLink.GetDest(selection, key);
         
         if (selection == NAVIGATION) return;
     }
     catch (const exception& e) {
-        Console::Goto(padding, 0);
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e.what() << " ";
-        system("pause");
-        redraw = true;
+        error = e.what();
     }
     catch (const char* e) {
-        Console::Goto(padding, 0);
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e << " ";
-        system("pause");
-        redraw = true;
+        error = e;
+    }
+    catch (const string& e) {
+        error = e;
     }
     }
 }
 
-void ManageBillsInYear(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
+void ManageBillsInYear(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key, bool redraw)
 {
     int toolBarW = 32;
-    int searchBoxW = 50;
-    int padding = 2;    
+    int searchBoxW = 50;  
     
-    const auto& rooms = nhatro.GetRooms();
     int startX = navBox.GetX(), startY = navBox.GetY() + navBox.GetH();
     
     NumberMenuBox filterBox(startX, startY, toolBarW, "LOC THONG TIN PHONG");
-    filterBox.AddOption("Tat ca phong");
-    filterBox.AddOption("Phong con no tien");
-    filterBox.AddOption("Phong khong no tien");
-    filterBox.AddOption("Tien no vuot qua tien coc");
-    NumberMenuBox sortBox(startX, filterBox.GetY() + filterBox.GetH(), toolBarW, "SAP XEP PHONG");
-    sortBox.AddOption("Theo ma phong");
-    sortBox.AddOption("Tong doanh thu tang dan");
-    sortBox.AddOption("Tong doanh thu giam dan");
-    sortBox.AddOption("Tong no tang dan");
-    sortBox.AddOption("Tong no giam dan");
+    filterBox.AddOption("1. Tat ca phong");
+    filterBox.AddOption("2. Phong con no tien");
+    filterBox.AddOption("3. Phong khong no tien");
+    filterBox.AddOption("4. Tien no vuot qua tien coc");
+    NumberMenuBox sortBox(filterBox.GetX() + filterBox.GetW(), filterBox.GetY(), toolBarW, "SAP XEP PHONG");
+    sortBox.AddOption("1. Theo ma phong");
+    sortBox.AddOption("2. Tong doanh thu tang dan");
+    sortBox.AddOption("3. Tong doanh thu giam dan");
+    sortBox.AddOption("4. Tong no tang dan");
+    sortBox.AddOption("5. Tong no giam dan");
     ButtonBox detailBtn(startX, sortBox.GetY() + sortBox.GetH(), toolBarW, "XEM CHI TIET LICH SU HOA DON");
     string searchValue = "";
-    SingleLineBox searchBox(padding*2 + toolBarW, startY, searchBoxW, "TIM KIEM", searchValue);
-    List<BillInYear> sBillsInYear;
-    List<BillInYear> fBillsInYear;
-    TableBox<BillInYear> dataBox(padding*2 + toolBarW, searchBox.GetY() + searchBox.GetH() + 2, 
-    BillInYearTableWidth(), fBillsInYear, BillInYearTableInit, BillInYearTableEnd, BillInYearTableShow);
+    SingleLineBox searchBox(detailBtn.GetX() + detailBtn.GetW(), detailBtn.GetY(), searchBoxW, "TIM KIEM", searchValue);
+    static List<BillInYear> sBillsInYear;
+    static List<BillInYear> fBillsInYear;
+    TableBox<BillInYear> dataBox(detailBtn.GetX(), detailBtn.GetY() + detailBtn.GetH() + 1, 
+    BillInYearTableWidth(), fBillsInYear, BillInYearTableInit, BillInYearTableEnd, 
+    BillInYearTableShow, BillInYearTotal);
 
-    int year = Nhatro::today.year;
+    static int year = (Month(Nhatro::today) - 1).year;
     string yearStr = to_string(year);
-    SingleLineBox yearBox(searchBox.GetX() + searchBox.GetW(), startY, 15, "Nam", yearStr);
+    SingleLineBox yearBox(searchBox.GetX() + searchBox.GetW(), searchBox.GetY(), 15, "NAM", yearStr);
     enum Action {
         NONE,
         NAVIGATION,
@@ -617,22 +553,25 @@ void ManageBillsInYear(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
 
     InputHandler<Action> btnLink(NONE, SEARCH);
     btnLink.AddRelation(NAVIGATION, Console::DOWN, FILTER);
-    btnLink.AddRelation(FILTER, Console::UP, NAVIGATION);
-    btnLink.AddRelation(SEARCH, Console::UP, NAVIGATION);
-    btnLink.AddRelation(YEAR, Console::UP, NAVIGATION);
-    btnLink.AddRelation(SORT, Console::UP, FILTER);
-    btnLink.AddRelation(DETAIL, Console::UP, SORT);
-    btnLink.AddRelation(FILTER, Console::DOWN, SORT);
-    btnLink.AddRelation(SORT, Console::DOWN, DETAIL);
-    btnLink.AddRelation(FILTER, Console::RIGHT, SEARCH);
-    btnLink.AddRelation(SORT, Console::RIGHT, SEARCH);
-    btnLink.AddRelation(DETAIL, Console::RIGHT, SEARCH);
-    btnLink.AddRelation(SEARCH, Console::RIGHT, YEAR);
-    btnLink.AddRelation(YEAR, Console::LEFT, SEARCH);
-    btnLink.AddRelation(SEARCH, Console::LEFT, FILTER);
+    btnLink.AddRelation(FILTER,     Console::UP, NAVIGATION);
+    btnLink.AddRelation(SORT,       Console::UP, NAVIGATION);
+    btnLink.AddRelation(SEARCH,     Console::UP, SORT);
+    btnLink.AddRelation(YEAR,       Console::UP, SORT);
+    btnLink.AddRelation(DETAIL,     Console::UP, FILTER);
+    btnLink.AddRelation(FILTER,     Console::DOWN, DETAIL);
+    btnLink.AddRelation(SORT,       Console::DOWN, SEARCH);
+    btnLink.AddRelation(FILTER,     Console::RIGHT, SORT);
+    btnLink.AddRelation(DETAIL,     Console::RIGHT, SEARCH);
+    btnLink.AddRelation(SEARCH,     Console::RIGHT, YEAR);
+    btnLink.AddRelation(YEAR,       Console::LEFT, SEARCH);
+    btnLink.AddRelation(SEARCH,     Console::LEFT, DETAIL);
+    btnLink.AddRelation(SORT,       Console::LEFT, FILTER);
 
-    bool redraw = 1;
+    const auto& rooms = nhatro.GetRooms();
+
     bool reload = redraw;
+    bool cont = false;
+    string error;
     int filterChoice = 0;
     int sortChoice = 0;
     selection = btnLink.GetDest(selection, key);
@@ -643,19 +582,23 @@ void ManageBillsInYear(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
             sBillsInYear = GetBills(year, rooms);
             SortBills(sortChoice, sBillsInYear);
             fBillsInYear = FilterBills(filterChoice, sBillsInYear);
-            dataBox.Draw();
             reload = false;
+            redraw = true;
         }
         if (redraw) {
             std::system("cls");
             navBox.Draw();
-            searchBox.Draw();
-            yearBox.Draw();
             filterBox.Draw();
             sortBox.Draw();
             detailBtn.Draw();
+            searchBox.Draw();
+            yearBox.Draw();
             dataBox.Draw();
             redraw = false;
+        }
+        if (!error.empty()) {
+            Console::DrawManagerError(error, detailBtn.GetX(), detailBtn.GetY() + detailBtn.GetH());
+            error.clear();
         }
 
         if (selection == SEARCH) {
@@ -683,13 +626,16 @@ void ManageBillsInYear(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
             } 
         }
         if (selection == DETAIL) {
-            bool result = detailBtn(key);
+            bool result = true;
+            if (!cont) result = detailBtn(key);
             if (result) {
-                int index = dataBox(key);
+                int index = dataBox(key, cont);
                 if (index != -1) {
+                    reload = true;
+                    cont = true;
                     UpdateBill(fBillsInYear[index].room);
-                    redraw = true;
                 }
+                else cont = false;
                 key = Console::OTHER;
             }
         } 
@@ -702,22 +648,15 @@ void ManageBillsInYear(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
         }
 
         if (key == Console::ESC) return;
+        if (key == Console::F5) redraw = true;
         selection = btnLink.GetDest(selection, key);
         if (selection == NAVIGATION) return;
     }
     catch (const exception& e) {
-        Console::Goto(padding, 0);
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e.what() << " ";
-        system("pause");
-        redraw = true;
+        error = e.what();
     }
-    catch (const string& e) {
-        Console::Goto(padding, 0);
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e << " ";
-        system("pause");
-        redraw = true;
+    catch (const char* e) {
+        error = e;
     }
     }
 }
@@ -725,8 +664,23 @@ void ManageBillsInYear(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key)
 void CreateBills(Nhatro& nhatro, Month month)
 {
     auto& rooms = nhatro.GetRooms();
+    List<string> needUpdateIndexRooms;
     for (auto& room : rooms) {
-        if (room.get()->IsRented()) room.get()->CreateBill(month);
+        try {
+            if (room.get()->IsRented()) room.get()->CreateBill(month);
+        }
+        catch (const string& e) {
+            needUpdateIndexRooms.push_back(e);
+        }
+    }
+
+    if (!needUpdateIndexRooms.empty()) {
+        string needActionRooms = needUpdateIndexRooms.front();
+        for (int i = 1; i < needUpdateIndexRooms.size(); i++) {
+            needActionRooms += ", ";
+            needActionRooms += needUpdateIndexRooms[i];
+        }
+        throw "Can cap nhat so dien nuoc phong " + needActionRooms;
     }
 }
 bool GetBillForm(MonthlyBill* bill, const string& title, bool add = 0) {
@@ -734,96 +688,91 @@ bool GetBillForm(MonthlyBill* bill, const string& title, bool add = 0) {
     int padding = 3;
     FormBox billBox(padding, padding, 80, 0.6, title);
     billBox.AddConstField("Phong", bill->room->GetName());
-    if (add) billBox.AddField("Ky thanh toan (MM/YYYY)", to_string(bill->month));
-    else billBox.AddConstField("Ky thanh toan", to_string(bill->month));
+    billBox.AddChosenField("Da thanh toan", {"CHUA", "ROI"}, bill->isPaid); 
+    billBox.AddConstField("Ky thanh toan", to_string(bill->month));
     billBox.AddField("Tien thue phong", to_string(bill->rentCost), "", " VND");
     billBox.AddField("Tien rac", to_string(bill->trashCost), "", " VND");
     billBox.AddField("Tien mang", to_string(bill->wifiCost), "", " VND");
     billBox.AddField("Tien dich vu", to_string(bill->serviceCost), "", " VND");
     billBox.AddField("Phi thiet hai", to_string(bill->damageCost), "", " VND");
-    billBox.AddField("Chi so dien cu", to_string(bill->oldElectricIndex), "", " kWh"); 
-    billBox.AddField("Chi so dien moi", to_string(bill->newElectricIndex), "", " kWh"); 
-    billBox.AddField("Tien dien", to_string(Room::electricUnitPrice), 
+    billBox.AddConstField("Chi so dien cu", to_string(bill->oldElectricIndex) + " kWh"); 
+    billBox.AddConstField("Chi so dien moi", to_string(bill->newElectricIndex) + " kWh"); 
+    billBox.AddField("Tien dien", to_string(bill->electricCost/(bill->newElectricIndex - bill->oldElectricIndex)), 
         to_string(bill->electricCost) + " VND (Don gia: ", " VND/kWh)");
-    billBox.AddField("Chi so nuoc cu", to_string(bill->oldWaterIndex), "", " m3"); 
-    billBox.AddField("Chi so nuoc moi", to_string(bill->newWaterIndex), "", " m3"); 
-    billBox.AddField("Tien nuoc", to_string(Room::waterUnitPrice), 
+    billBox.AddConstField("Chi so nuoc cu", to_string(bill->oldWaterIndex) + " m3"); 
+    billBox.AddConstField("Chi so nuoc moi", to_string(bill->newWaterIndex) + " m3"); 
+    billBox.AddField("Tien nuoc", to_string(bill->waterCost/(bill->newWaterIndex - bill->oldWaterIndex)), 
         to_string(bill->waterCost) + " VND (Don gia: ", " VND/m3)");
-    billBox.AddChosenField("Da thanh toan", {"CHUA", "ROI"}, bill->isPaid);
+    billBox.GoToCenter();
     billBox.Draw();
 
-    ull oldElc, newElc, uElec, oldWtr, newWtr, uWtr;
+    ull uElec, uWtr;
     Month month;
+    string error;
     while (true) {
+    if (!error.empty()) {
+        Console::DrawManagerError(error, padding, billBox.GetY() + billBox.GetH());
+        error.clear();
+    }
     try {
         Console::Key key;
         bool confirm = billBox(key);
         if (key == Console::ESC) return false;
         if (confirm) {
-            if (add) bill->month = SToDate(billBox.GetValue(1));
-            bill->rentCost = SToULL(billBox.GetValue(2));
-            bill->trashCost = SToULL(billBox.GetValue(3));
-            bill->wifiCost = SToULL(billBox.GetValue(4));
-            bill->serviceCost = SToULL(billBox.GetValue(5));
-            bill->damageCost = SToULL(billBox.GetValue(6));
-            oldElc = SToULL(billBox.GetValue(7));
-            newElc = SToULL(billBox.GetValue(8));
-            uElec = SToULL(billBox.GetValue(9));
-            oldWtr = SToULL(billBox.GetValue(10));
-            newWtr = SToULL(billBox.GetValue(11));
-            uWtr = SToULL(billBox.GetValue(12));
-            bill->isPaid = billBox.GetChosenValue(13);
+            bill->isPaid = billBox.GetChosenValue(1);
+            bill->rentCost = SToULL(billBox.GetValue(3));
+            bill->trashCost = SToULL(billBox.GetValue(4));
+            bill->wifiCost = SToULL(billBox.GetValue(5));
+            bill->serviceCost = SToULL(billBox.GetValue(6));
+            bill->damageCost = SToULL(billBox.GetValue(7));
+            uElec = SToULL(billBox.GetValue(10));
+            uWtr = SToULL(billBox.GetValue(13));
 
-            if (oldElc > newElc) throw invalid_argument("So dien khong hop le");
-            if (oldWtr > newWtr) throw invalid_argument("So nuoc khong hop le");
-            bill->oldElectricIndex = oldElc;
-            bill->newElectricIndex = newElc;
-            bill->oldWaterIndex = oldWtr;
-            bill->newWaterIndex = newWtr;
-
-            bill->electricCost = uElec * (newElc - oldElc);
-            bill->waterCost = uWtr * (newWtr - oldWtr);
+            bill->electricCost = uElec * (bill->newElectricIndex - bill->oldElectricIndex);
+            bill->waterCost = uWtr * (bill->newWaterIndex - bill->oldWaterIndex);
             bill->totalCost = bill->rentCost + bill->trashCost + bill->wifiCost + bill->serviceCost 
             + bill->damageCost + bill->electricCost + bill->waterCost;
-            if (bill->isPaid) bill->paymentDate = Nhatro::today;
 
-            Console::SetColor(Console::WHITE);
-            Console::ClearSegment(padding, billBox.GetY() + billBox.GetH(), 2, 100);
-            Console::Goto(padding, billBox.GetY() + billBox.GetH());
+            if (add) bill->room->AddBill(*bill);
+            else bill->room->UpdateBill(*bill);
             return true;
         }
     }
     catch (const exception& e) {
-        Console::ClearSegment(padding, billBox.GetY() + billBox.GetH(), 1, 100);
-        Console::Goto(padding, billBox.GetY() + billBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << e.what();
+        error = e.what();
     }
     catch (const char* e) {
-        Console::ClearSegment(padding, billBox.GetY() + billBox.GetH(), 1, 100);
-        Console::Goto(padding, billBox.GetY() + billBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << e;
+        error = e;
     }
     catch (const string& e) {
-        Console::ClearSegment(padding, billBox.GetY() + billBox.GetH(), 1, 100);
-        Console::Goto(padding, billBox.GetY() + billBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << e;
+        error = e;
     }
     catch (...) {
-        Console::ClearSegment(padding, billBox.GetY() + billBox.GetH(), 1, 100);
-        Console::Goto(padding, billBox.GetY() + billBox.GetH());
-        Console::SetColor(Console::RED);
-        cout << "Loi khong xac dinh";
+        error = "Loi khong xac dinh";
     }
     }
 } 
+void AddBill(Room* room, Month mon)
+{
+    MonthlyBill* newBill = new MonthlyBill;
+    newBill->room = room;
+    newBill->month = mon;
+    newBill->oldElectricIndex = room->GetOldElectricIndex();
+    newBill->newElectricIndex = room->GetNewElectricIndex();
+    newBill->electricCost = Room::electricUnitPrice * (newBill->newElectricIndex - newBill->oldElectricIndex);
+    newBill->oldWaterIndex = room->GetOldWaterIndex();
+    newBill->newWaterIndex = room->GetNewWaterIndex();
+    newBill->waterCost = Room::waterUnitPrice * (newBill->newWaterIndex - newBill->oldWaterIndex);
+    bool success = GetBillForm(newBill, "TAO HOA DON MOI", true);
+
+    if (!success) throw "Tao hoa don khong thanh cong";
+}
 void UpdateBill(MonthlyBill* bill)
 {
+    if (bill == nullptr) throw runtime_error("Hoa don khong ton tai");
     MonthlyBill tmpBill = *bill;
     bool success = GetBillForm(&tmpBill, "CAP NHAT HOA DON");
-    if (success) bill->room->UpdateBill(tmpBill);
+    if (!success) throw "Cap nhat hoa don khong thanh cong";
 }
 void UpdateBill(Room* room)
 {
@@ -846,8 +795,7 @@ void UpdateBill(Room* room)
     sortBox.AddOption("2. Tong hoa don tang dan");
     sortBox.AddOption("3. Tong hoa don giam dan");
 
-    ButtonBox addBtn(padding, sortBox.GetY() + sortBox.GetH(), toolBarW, "TAO HOA DON");
-    ButtonBox detailBtn(padding, addBtn.GetY() + addBtn.GetH(), toolBarW, "XEM VA CAP NHAT HOA DON");
+    ButtonBox detailBtn(padding, sortBox.GetY() + sortBox.GetH(), toolBarW, "XEM VA CAP NHAT HOA DON");
     ButtonBox deleteBtn(padding, detailBtn.GetY() + detailBtn.GetH(), toolBarW, "XOA HOA DON");
     ButtonBox allBtn(padding, deleteBtn.GetY() + deleteBtn.GetH(), toolBarW, "THANH TOAN TOAN BO");
 
@@ -858,7 +806,7 @@ void UpdateBill(Room* room)
 
     List<MonthlyBill*> sBills;
     List<MonthlyBill*> fBills;
-    TableBox<MonthlyBill*> dataBox(fromBox.GetX(), fromBox.GetY() + fromBox.GetH(), 
+    TableBox<MonthlyBill*> dataBox(fromBox.GetX(), fromBox.GetY() + fromBox.GetH() + 1, 
     RoomBillTableWidth(), fBills, RoomBillTableInit, RoomBillTableEnd, RoomBillTableShow);
     
     enum Action {
@@ -868,7 +816,6 @@ void UpdateBill(Room* room)
         TO,
         FILTER,
         SORT,
-        ADD,
         DETAIL,
         REMOVE,
         ALL
@@ -878,14 +825,12 @@ void UpdateBill(Room* room)
     InputHandler<Action> btnLink(NONE, ALL);
     btnLink.AddRelation(FILTER, Console::UP, PREPAID);
     btnLink.AddRelation(SORT, Console::UP, FILTER);
-    btnLink.AddRelation(ADD, Console::UP, SORT);
-    btnLink.AddRelation(DETAIL, Console::UP, ADD);
+    btnLink.AddRelation(DETAIL, Console::UP, SORT);
     btnLink.AddRelation(REMOVE, Console::UP, DETAIL);
     btnLink.AddRelation(ALL, Console::UP, REMOVE);
     btnLink.AddRelation(PREPAID, Console::DOWN, FILTER);
     btnLink.AddRelation(FILTER, Console::DOWN, SORT);
-    btnLink.AddRelation(SORT, Console::DOWN, ADD);
-    btnLink.AddRelation(ADD, Console::DOWN, DETAIL);
+    btnLink.AddRelation(SORT, Console::DOWN, DETAIL);
     btnLink.AddRelation(DETAIL, Console::DOWN, REMOVE);
     btnLink.AddRelation(REMOVE, Console::DOWN, ALL);
     btnLink.AddRelation(TO, Console::LEFT, FROM);
@@ -893,13 +838,14 @@ void UpdateBill(Room* room)
     btnLink.AddRelation(FROM, Console::RIGHT, TO);
     btnLink.AddRelation(FILTER, Console::RIGHT, FROM);
     btnLink.AddRelation(SORT, Console::RIGHT, FROM);
-    btnLink.AddRelation(ADD, Console::RIGHT, FROM);
     btnLink.AddRelation(DETAIL, Console::RIGHT, FROM);
     btnLink.AddRelation(REMOVE, Console::RIGHT, FROM);
     btnLink.AddRelation(ALL, Console::RIGHT, FROM);
 
     bool redraw = true;
     bool reload = true;
+    bool cont = false;
+    string error;
     int filterChoice = 0;
     int sortChoice = 0;
     
@@ -915,21 +861,23 @@ void UpdateBill(Room* room)
             if (toM == "") en = bills.size();
             else {
                 month2 = SToMonth(toM);
-                en = UpperBound(bills, month2 + 1) - bills.begin();
+                en = UpperBound(bills, month2) - bills.begin();
             }
             sBills.clear();
             for (int i = en - 1; i >= st; i--) sBills.push_back(const_cast<MonthlyBill*>(&bills[i]));
             SortBills(sortChoice, sBills);
             fBills = FilterBills(filterChoice, sBills);
-            dataBox.Draw();
             reload = false;
+            redraw = true;
         }
         if (redraw) {
             system("cls");
             Console::Goto(padding, padding);
             cout << setw(20) << "Phong" << ": " << room->GetName() << " (" << room->GetId() << ")";
             Console::Goto(padding, padding + 1);
-            cout << setw(20) << "Truong phong" << ": " << room->GetRoomLeader()->GetName();
+            Tenant* roomLeader = room->GetRoomLeader();
+            cout << setw(20) << "Truong phong" << ": "
+                 << (roomLeader ? roomLeader->GetName() : "Chua co");
             Console::Goto(padding, padding + 2);
             cout << setw(20) << "Tong no" << ": " << room->GetDebt();
             prepaidBox.Draw();
@@ -937,12 +885,15 @@ void UpdateBill(Room* room)
             toBox.Draw();
             filterBox.Draw();
             sortBox.Draw();
-            addBtn.Draw();
             deleteBtn.Draw();
             detailBtn.Draw();
             allBtn.Draw();
             dataBox.Draw();
             redraw = false;
+        }
+        if (!error.empty()) {
+            Console::DrawManagerError(error, fromBox.GetX(), fromBox.GetY() + fromBox.GetH());
+            error.clear();
         }
 
         Console::Key key;
@@ -967,40 +918,47 @@ void UpdateBill(Room* room)
                 sortChoice = choice;
             } 
         }
-        if (selection == ADD) {
-            bool result = addBtn(key);
-            if (result) {
-                AddBill(room, Nhatro::today);
-                reload = true;
-            }
-        } 
         if (selection == REMOVE) {
             bool result = deleteBtn(key);
             if (result) {
-                int index = dataBox(key);
+                int index = dataBox(key, true);
                 if (index != -1) {
-                    fBills[index]->room->RemoveBill(fBills[index]->month);
-                    reload = true;
+                    redraw = true;
+                    bool confirm = WarningBox::Warning(36, "CANH BAO", 
+                        "Xac nhan xoa hoa don", "XAC NHAN", "HUY");
+                    if (confirm) {
+                        fBills[index]->room->RemoveBill(fBills[index]->month);
+                        reload = true;
+                    }
                 }
                 key = Console::OTHER;
             }
         }
         if (selection == DETAIL) {
-            bool result = detailBtn(key);
+            bool result = true;
+            if (!cont) result = detailBtn(key);
             if (result) {
-                int index = dataBox(key);
+                int index = dataBox(key, cont);
                 if (index != -1) {
-                    UpdateBill(fBills[index]);
                     redraw = true;
+                    cont = true;
+                    UpdateBill(fBills[index]);
+                    SortBills(sortChoice, sBills);
+                    fBills = FilterBills(filterChoice, sBills);
                 }
+                else cont = false;
                 key = Console::OTHER;
             }
         } 
         if (selection == ALL) {
             bool result = allBtn(key);
             if (result) {
-                for (auto& bill : sBills) bill->isPaid = true;
-                dataBox.Draw();
+                bool confirm = WarningBox::Warning(36, "CANH BAO", 
+                        "Xac nhan thanh toan toan bo hoa don", "XAC NHAN", "HUY");
+                if (confirm) {
+                    for (auto& bill : sBills) bill->isPaid = true;
+                    redraw = true;
+                }
             }
         }
         if (selection == FROM) {
@@ -1018,24 +976,18 @@ void UpdateBill(Room* room)
             }
         }
         if (key == Console::ESC) break;
+        if (key == Console::F5) redraw = true;
         selection = btnLink.GetDest(selection, key);
     }
     catch (const exception& e) {
-        Console::Goto(padding, 0);
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e.what() << " ";
-        system("pause");
-        redraw = true;
+        error = e.what();
     }
     catch (const char* e) {
-        Console::Goto(padding, 0);
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e << " ";
-        system("pause");
-        redraw = true;
+        error = e;
     }
     }
 }
+
 List<MonthlyBill*> FilterBills(int choice, const List<MonthlyBill*>& bills)
 {
     if (choice <= 0 || choice > 4 || bills.empty()) return bills;
@@ -1063,25 +1015,16 @@ void SortBills(int choice, List<MonthlyBill*>& bills)
         [&](MonthlyBill* a, MonthlyBill* b) {
             switch (choice)
             {
-            case 1: return CompareBillsMonth(a, b);
-            case 2: return CompareBillsTotal(a, b);
-            case 3: return CompareBillsTotal1(a, b);
+            case 0: return CompareBillsMonth(a, b);
+            case 1: return CompareBillsTotal(a, b);
+            case 2: return CompareBillsTotal1(a, b);
             default: return true;
             }
         });
 }
-void AddBill(Room* room, Month mon)
-{
-    MonthlyBill newBill;
-    newBill.room = room;
-    newBill.month = mon;
-    bool success = GetBillForm(&newBill, "TAO HOA DON MOI", true);
-    if (success) room->AddBill(newBill);
-}
-
 const MonthlyBill* LowerBound(const List<MonthlyBill>& bills, Month month)
 {
-    if (bills.empty()) return nullptr;
+    if (bills.empty()) return bills.end();
     int left = 0, right = int(bills.size()-1), mid;
     while (left < right) {
         mid = left + (right - left) / 2;
@@ -1093,7 +1036,7 @@ const MonthlyBill* LowerBound(const List<MonthlyBill>& bills, Month month)
 }
 const MonthlyBill* UpperBound(const List<MonthlyBill>& bills, Month month)
 {
-    if (bills.empty()) return nullptr;
+    if (bills.empty()) return bills.end();
     int left = 0, right = int(bills.size()-1), mid;
     while (left < right) {
         mid = left + (right - left) / 2;
@@ -1205,9 +1148,8 @@ void SortBills(int choice, List<BillInMonth>& bills)
             switch (choice)
             {
             case 0: return CompareBillsRoom(a.room, b.room);
-            case 1: return CompareBillsPaymentDate(a.bill, b.bill);
-            case 2: return CompareBillsTotal(a.bill, b.bill);
-            case 3: return CompareBillsTotal1(a.bill, b.bill);
+            case 1: return CompareBillsTotal(a.bill, b.bill);
+            case 2: return CompareBillsTotal1(a.bill, b.bill);
             default: return true;
             }
         });
@@ -1215,12 +1157,6 @@ void SortBills(int choice, List<BillInMonth>& bills)
 bool CompareBillsRoom(Room* room1, Room* room2)
 {
     return room1->GetId() < room2->GetId();
-}
-bool CompareBillsPaymentDate(MonthlyBill* bill1, MonthlyBill* bill2)
-{
-    if (bill1 == nullptr) return false;
-    if (bill2 == nullptr) return true;
-    return bill1->paymentDate > bill2->paymentDate;
 }
 bool CompareBillsMonth(MonthlyBill* bill1, MonthlyBill* bill2)
 {
@@ -1360,55 +1296,114 @@ void BillInMonthTableShow(const BillInMonth& bill)
         << setw(BILL_COST_W)    << (bill.bill ? to_string(bill.bill->totalCost) : "")    << BORDER_V
         << setw(BILL_STATUS_W)  << (bill.bill ? (bill.bill->isPaid ? "Da thanh toan" : "Chua thanh toan") : "") << BORDER_V;
 }
+void BillInMonthTotal(int x, int y, const List<BillInMonth>& data)
+{
+    ull rent = 0, trash = 0, wifi = 0, service = 0, damage = 0, electric = 0, water = 0, total = 0;
+    for (const auto& bim : data) if (bim.bill) {
+        rent += bim.bill->rentCost;
+        trash += bim.bill->trashCost;
+        wifi += bim.bill->wifiCost;
+        service += bim.bill->serviceCost;
+        damage += bim.bill->damageCost;
+        electric += bim.bill->electricCost;
+        water += bim.bill->waterCost;
+        total += bim.bill->totalCost;
+    }
+
+    string costCell = Repeat(BILL_COST_W, BORDER_H) + BORDER_CROSS;
+    Console::Goto(x, y);
+    cout << BORDER_RT 
+        << Repeat(ROOM_ID_W, BORDER_H)     << BORDER_CROSS
+        << Repeat(8, costCell.c_str())
+        << Repeat(BILL_STATUS_W, BORDER_H) << BORDER_LT;
+
+    Console::Goto(x, y+1);
+    cout << left << BORDER_V
+        << setw(ROOM_ID_W)      << "Tong"    << BORDER_V
+        << setw(BILL_COST_W)    << rent      << BORDER_V
+        << setw(BILL_COST_W)    << trash     << BORDER_V
+        << setw(BILL_COST_W)    << wifi      << BORDER_V
+        << setw(BILL_COST_W)    << service   << BORDER_V
+        << setw(BILL_COST_W)    << damage    << BORDER_V
+        << setw(BILL_COST_W)    << electric  << BORDER_V
+        << setw(BILL_COST_W)    << water     << BORDER_V
+        << setw(BILL_COST_W)    << total     << BORDER_V
+        << setw(BILL_STATUS_W)  << ""        << BORDER_V;
+}
 
 void BillInYearTableInit(int x, int y)
 {
-    string costCell = Repeat(BILL_Y_COST_W, BORDER_H) + BORDER_DT;
+    string costCell = Repeat(BILL_COST_W, BORDER_H) + BORDER_DT;
     Console::Goto(x, y);
     cout << BORDER_TL 
         << Repeat(ROOM_ID_W, BORDER_H)    << BORDER_DT
         << Repeat(12, costCell.c_str())
-        << Repeat(BILL_Y_COST_W, BORDER_H)  << BORDER_TR;
+        << Repeat(BILL_COST_W, BORDER_H)  << BORDER_TR;
 
     Console::Goto(x, y+1);
     cout << left << BORDER_V << setw(ROOM_ID_W) << "Ma phong" << BORDER_V;
-    for (int i=1; i<=12; i++) cout << setw(BILL_Y_COST_W) << "Thang " + to_string(i) << BORDER_V;
-    cout << setw(BILL_Y_COST_W) << "Tong no" << BORDER_V;
+    for (int i=1; i<=12; i++) cout << setw(BILL_COST_W) << "Thang " + to_string(i) << BORDER_V;
+    cout << setw(BILL_COST_W) << "Tong no" << BORDER_V;
 
-    costCell = Repeat(BILL_Y_COST_W, BORDER_H) + BORDER_CROSS;
+    costCell = Repeat(BILL_COST_W, BORDER_H) + BORDER_CROSS;
     Console::Goto(x, y+2);
     cout << BORDER_RT 
         << Repeat(ROOM_ID_W, BORDER_H)    << BORDER_CROSS
         << Repeat(12, costCell.c_str())
-        << Repeat(BILL_Y_COST_W, BORDER_H)  << BORDER_LT;
+        << Repeat(BILL_COST_W, BORDER_H)  << BORDER_LT;
 }
 void BillInYearTableEnd(int x, int y)
 {
-    string costCell = Repeat(BILL_Y_COST_W, BORDER_H) + BORDER_UT;
+    string costCell = Repeat(BILL_COST_W, BORDER_H) + BORDER_UT;
     Console::Goto(x, y);
     cout << BORDER_BL 
         << Repeat(ROOM_ID_W, BORDER_H)    << BORDER_UT
         << Repeat(12, costCell.c_str())
-        << Repeat(BILL_Y_COST_W, BORDER_H)  << BORDER_BR;
+        << Repeat(BILL_COST_W, BORDER_H)  << BORDER_BR;
 }
 int BillInYearTableWidth()
 {
-    return ROOM_ID_W + 13*BILL_Y_COST_W + 15;
+    return ROOM_ID_W + 13*BILL_COST_W + 15;
 }
 void BillInYearTableShow(const BillInYear& bill)
 {
     cout << left << BORDER_V << setw(ROOM_ID_W) << bill.room->GetId() << BORDER_V;
     for (int i=0; i<bill.bills.size(); i++) {
-        cout << setw(BILL_Y_COST_W);
+        cout << setw(BILL_COST_W);
         if (bill.bills[i] == nullptr) {
             cout << "";
         }
         else {
-            cout << bill.bills[i]->totalCost;
+            cout << to_string(bill.bills[i]->totalCost) + (bill.bills[i]->isPaid ? "" : "*");
         }
         cout << BORDER_V;
     }
-    cout << setw(BILL_Y_COST_W) << (bill.room->GetDebt()) << BORDER_V;
+    cout << setw(BILL_COST_W) << (bill.room->GetDebt()) << BORDER_V;
+}
+void BillInYearTotal(int x, int y, const List<BillInYear>& data)
+{
+    List<ull> totalRevenue(12, 0);
+    ull totalDebt = 0;
+    for (const auto& biy : data) {
+        for (const auto& bim : biy.bills) if (bim) {
+            totalRevenue[bim->month.month - 1] += bim->totalCost;
+        }
+        totalDebt += biy.room->GetDebt();
+    }
+    
+    string costCell = Repeat(BILL_COST_W, BORDER_H) + BORDER_CROSS;
+    Console::Goto(x, y);
+    cout << BORDER_RT 
+        << Repeat(ROOM_ID_W, BORDER_H)    << BORDER_CROSS
+        << Repeat(12, costCell.c_str())
+        << Repeat(BILL_COST_W, BORDER_H)  << BORDER_LT;
+    
+    Console::Goto(x, y+1);
+    cout << left << BORDER_V << setw(ROOM_ID_W) << "Tong" << BORDER_V;
+    for (const ull& total : totalRevenue) {
+        cout << setw(BILL_COST_W) << total << BORDER_V;
+    }
+    cout << setw(BILL_COST_W) << totalDebt << BORDER_V;
 }
 
 void RoomBillTableInit(int x, int y)

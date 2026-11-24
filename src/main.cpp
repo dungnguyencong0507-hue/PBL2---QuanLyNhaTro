@@ -13,7 +13,6 @@ Nhatro* database = nullptr;
 
 void SaveData()
 {
-    system("cls");
     database->SaveGeneralData("General.txt");
     database->SaveRoomData("Room.txt", "Bill.txt", "Furnishing.txt", "Damage.txt");
     database->SaveTenantData("Tenant.txt");
@@ -38,6 +37,23 @@ BOOL WINAPI ConsoleHandler(DWORD signal) {
     return FALSE;
 }
 
+void ShowInformation(int x, int y)
+{
+    Console::SetColor(Console::YELLOW);
+    Console::Goto(x, y-6);
+    cout << "PL2 - Do an co so lap trinh";
+    Console::Goto(x, y-5);
+    cout << "De tai: Chuong trinh quan ly nha tro";
+    Console::Goto(x, y-3);
+    cout << "Sinh vien thuc hien:";
+    Console::Goto(x, y-2);
+    cout << "  - Nguyen Cong Dung   MSSV: 102250113    Lop: 25T_DT3";
+    Console::Goto(x, y-1);
+    cout << "  - Nguyen Van Tai     MSSV: 102250143    Lop: 25T_DT3";
+    Console::Goto(x, y);
+    cout << "Giang vien huong dan: Do Thi Tuyet Hoa";
+}
+
 int main()
 {
     try {
@@ -54,22 +70,25 @@ int main()
         Sleep(1000);
         system("cls");
 
-        string dateStr;
-        SingleLineBox dateBox(10, 10, 40, "Ngay hien tai", dateStr);
-
-        MenuBox menu(dateBox.GetX(), dateBox.GetY() + dateBox.GetH(), 40, "QUAN LY NHA TRO");
+        MenuBox menu(2, 2, 40, "QUAN LY NHA TRO");
         menu.AddOption("Quan ly phong");
         menu.AddOption("Quan ly khach thue");
         menu.AddOption("Quan ly hoa don va dien nuoc");
-        // menu.AddOption("Bao cao tai chinh");
+        string dateStr = to_string(Nhatro::today);
+        SingleLineBox dateBox(menu.GetX(), menu.GetY() - 3, 40, "Ngay hien tai", dateStr);
 
-        bool func = 0;
+        bool func = 1;
         int choice;
-        menu.Draw();
-        dateBox.Draw();
         Console::Key key;
         while (true){
         try {
+            system("cls");
+            menu.GoToCenter(0, 13);
+            dateBox.ResetPosition(menu.GetX(), menu.GetY() - 3);
+            ShowInformation(dateBox.GetX(), dateBox.GetY() - 2);
+            dateBox.Draw();
+            menu.Draw();
+
             if (func == 0) {
                 dateBox(key);
                 if (key == Console::ESC) break;
@@ -97,33 +116,26 @@ int main()
                         break;
                 }
             }
-            system("cls");
-            dateBox.Draw();
-            menu.Draw();
         }
         catch (const exception& error){
             Console::Goto(menu.GetX(), menu.GetY() + menu.GetH());
             Console::SetColor(Console::RED);
-            cerr << "\nLoi: " << error.what() << '\n';
-            system("pause");
+            cerr << "\nLoi: " << error.what();
         }
         catch (const char* error){
             Console::Goto(menu.GetX(), menu.GetY() + menu.GetH());
             Console::SetColor(Console::RED);
-            cerr << "\nLoi: " << error << '\n';
-            system("pause"); 
+            cerr << "\nLoi: " << error;
         }
         }
         ConsoleHandler(CTRL_CLOSE_EVENT);
     }
     catch (const exception& error){
-        cerr << "\nLoi: " << error.what() << '\n';
-        system("pause"); 
+        cerr << "\nLoi: " << error.what();
         return 1;
     }
     catch (const char* error){
-        cerr << "\nLoi: " << error << '\n';
-        system("pause"); 
+        cerr << "\nLoi: " << error;
         return 1;
     }
     return 0;

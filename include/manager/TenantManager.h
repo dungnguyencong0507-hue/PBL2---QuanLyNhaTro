@@ -15,7 +15,7 @@ bool FilterRepresentativeTenants(Tenant*);
 bool FilterTenantsGotTmpRsd(Tenant*);
 bool FilterTenantsNotTmpRsd(Tenant*);
 bool CompareTenantsName(Tenant*, Tenant*);
-bool CompareTenantsName1(Tenant*, Tenant*);
+bool CompareTenantsGender(Tenant*, Tenant*);
 bool CompareTenantsRoom(Tenant*, Tenant*);
 
 void TenantTableInit(int x, int y);

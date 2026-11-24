@@ -22,29 +22,16 @@ public:
     static Date today;
     
 private:
-    string name;
-    string address;
-    string phone;
     List<unique_ptr<Room>> rooms;
     List<unique_ptr<Tenant>> tenants;
     List<unique_ptr<MonthlyBill>> bills;
 
-    Nhatro(const string&, const string&, const string&);
+    Nhatro();
 
 public:
-    static Nhatro& GetInstance(const string& ="Nha tro KHA BI", 
-        const string& ="54 Nguyen Luong Bang", const string& ="0123456789");
+    static Nhatro& GetInstance();
     ~Nhatro();
 
-    void SetName(const string&);
-    void SetAddress(const string&);
-    void SetPhone(const string&);
-    void SetDate(const Date&);
-
-    const string& GetName() const;
-    const string& GetAddress() const;
-    const string& GetPhone() const;
-    const Date& GetDate() const;
     int GetNumRoom() const;
     int GetNumTenant() const;
     const List<unique_ptr<Room>>& GetRooms();

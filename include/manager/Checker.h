@@ -87,6 +87,7 @@ inline void CheckPersonName(string& value)
         }
         else tmp += value[i];
     }
+    while (tmp.back() == ' ') tmp.pop_back();
     if (!tmp.empty()) value = tmp;
 }
 

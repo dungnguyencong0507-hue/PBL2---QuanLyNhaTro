@@ -1,2 +1,8 @@
-101|6/2/2024|101001|Hung ngoi len dieu hoa|2000000
-105|11/12/2024|105001|Hu hong|1500000
+101|15/3/2025|101004|Lam roi bep gay hu hai|850000|
+102|20/8/2025|102001|Gay canh quat va hong bo dieu khien|250000|
+104|12/8/2025|104002|Giat do qua tai gay hong may|2500000|
+104|6/7/2026|104004|Chay thanh dot|800000|
+105|10/1/2025|105005|Chay mach dien do tiep xuc voi nuoc|850000|
+201|12/11/2025|201002|Gay thanh giuong do nhay nhot|500000|
+202|18/4/2026|202003|Gay khay nhua ngan da|200000|
+204|22/8/2026|204001|Mat remote va hu dan lanh|1200000|

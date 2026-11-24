@@ -190,7 +190,7 @@ void Manager<T>::Draw() {
     static int searchBoxW = 50;
     static int padding = 2;    
     
-    NumberMenuBox filterBox(padding, padding, toolBarW, "LOC THONG TIN " + this->objectName);
+    NumberMenuBox filterBox(padding, 3, toolBarW, "LOC THONG TIN " + this->objectName);
     for (auto at : this->filtering) filterBox.AddOption(at.field);
 
     NumberMenuBox sortBox(padding, filterBox.GetY() + filterBox.GetH(), toolBarW, "SAP XEP " + this->objectName);
@@ -203,18 +203,21 @@ void Manager<T>::Draw() {
     ButtonBox deleteBtn(padding, detailBtn.GetY() + detailBtn.GetH(), toolBarW, "XOA " + this->objectName);
 
     string searchValue = "";
-    SingleLineBox searchBox(padding*2 + toolBarW, padding, searchBoxW, "TIM KIEM " + this->objectName, searchValue);
-    TableBox<T*> dataBox(padding*2 + toolBarW, padding*2 + searchBox.GetH(), this->tableWidth, this->filteredData, this->tableInit, this->tableEnd, this->tableShow);
+    SingleLineBox searchBox(padding*2 + toolBarW, filterBox.GetY(), searchBoxW, "TIM KIEM " + this->objectName, searchValue);
+    TableBox<T*> dataBox(padding*2 + toolBarW, searchBox.GetY() + searchBox.GetH() + 1, this->tableWidth, 
+                        this->filteredData, this->tableInit, this->tableEnd, this->tableShow);
 
     this->selection = FILTER;
     bool redraw = true;
+    bool cont = false;
     int filterChoice = 0, sortChoice = 0;
+    string error;
     
     while (true) {
     try {
         if (redraw) {
             system("cls");
-            Console::Goto(36, 0);
+            Console::Goto(36, 1);
             Console::SetColor(Console::YELLOW);
             cout << "QUAN LY " << this->objectName;
 
@@ -226,6 +229,10 @@ void Manager<T>::Draw() {
             detailBtn.Draw();
             dataBox.Draw();
             redraw = false;
+        }
+        if (!error.empty()) {
+            Console::DrawManagerError(error, padding*2 + toolBarW, searchBox.GetY() + searchBox.GetH());
+            error.clear();
         }
 
         Console::Key k;
@@ -259,13 +266,17 @@ void Manager<T>::Draw() {
         if (this->selection == REMOVE && this->deletable) {
             bool result = deleteBtn(k);
             if (result) {
-                int index = dataBox(k);
+                int index = dataBox(k, true);
                 if (index != -1) {
-                    this->removing(this->nhatro, this->filteredData[index]);
-                    this->ReloadData();
-                    this->SortData(sortChoice);
-                    this->FilterData(filterChoice);
                     redraw = true;
+                    bool confirm = WarningBox::Warning(24, "CANH BAO", 
+                        "Xac nhan xoa phong", "XAC NHAN", "HUY");
+                    if (confirm) {
+                        this->removing(this->nhatro, this->filteredData[index]);
+                        this->ReloadData();
+                        this->SortData(sortChoice);
+                        this->FilterData(filterChoice);
+                    }
                 }
                 k = Console::OTHER;
             }
@@ -278,37 +289,31 @@ void Manager<T>::Draw() {
             }
         } 
         if (this->selection == DETAIL) {
-            bool result = detailBtn(k);
+            bool result = true;
+            if (!cont) result = detailBtn(k);
             if (result) {
-                int index = dataBox(k);
+                int index = dataBox(k, cont);
                 if (index != -1) {
                     this->updating(this->nhatro, this->filteredData[index]);
                     this->SortData(sortChoice);
                     this->FilterData(filterChoice);
                     redraw = true;
+                    cont = true;
                 }
+                else cont = false;
                 k = Console::OTHER;
             }
         }
 
         if (k == Console::ESC) break;
+        if (k == Console::F5) redraw = true;
         this->selection = this->btnLink.GetDest(this->selection, k);
     }
     catch (const std::exception& e) {
-        Console::Goto(padding, padding*6 + toolBarW + filterBox.GetH() + sortBox.GetH() 
-                        + addBtn.GetH() + detailBtn.GetH() + deleteBtn.GetH());
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e.what() << " ";
-        system("pause");
-        redraw = true;
+        error = e.what();
     }
     catch (const string& e) {
-        Console::Goto(padding, padding*6 + toolBarW + filterBox.GetH() + sortBox.GetH() 
-                        + addBtn.GetH() + detailBtn.GetH() + deleteBtn.GetH());
-        Console::SetColor(Console::LIGHT_RED);
-        cout << e << " ";
-        system("pause");
-        redraw = true;
+        error = e;
     }
     }
 }

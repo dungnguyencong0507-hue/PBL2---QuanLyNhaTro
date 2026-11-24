@@ -51,6 +51,7 @@ public:
         BACKSPACE,
         DELETE_KEY,
         TAB,
+        F5,
         OTHER
     };
 
@@ -66,6 +67,7 @@ public:
                 case 75: return LEFT;
                 case 77: return RIGHT;
                 case 83: return DELETE_KEY;
+                case 63: return F5;
                 default: return OTHER;
             }
         }
@@ -88,6 +90,17 @@ public:
         SetConsoleCursorPosition(Console::Handle(), coord);
     }
 
+    static COORD GetWindowSize() {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        COORD size = {0, 0};
+
+        if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+            size.X = (SHORT) csbi.srWindow.Right - csbi.srWindow.Left + 1;
+            size.Y = (SHORT) csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+        }
+        return size;
+    }
+
     static void SetColor(Color textColor, Color backgroundColor) {
         WORD colorAtt = (backgroundColor << 4) | textColor;
         SetConsoleTextAttribute(Console::Handle(), colorAtt);
@@ -105,8 +118,11 @@ public:
         SetConsoleCursorInfo(handle, &info);
     }
 
-    static void ClearSegment(int x, int y1, int height, int width = 30) {
-        std::string spaces(width, ' ');
+    static void ClearSegment(int x, int y1, int height, int width = -1) {
+        std::string spaces;
+        int windowW = GetWindowSize().X;
+        if (width < 0 || x + width > windowW) spaces = Repeat(windowW - x, " ");
+        else spaces = Repeat(width, " ");
         Console::SetColor(Console::BLACK, Console::BLACK);
         for (int y = y1; y < y1 + height; ++y) {
             Goto(x, y);
@@ -116,6 +132,14 @@ public:
 
     static bool AllowedChar(const unsigned char& c) {
         return c != '*' && c != '#';
+    }
+
+    static void DrawManagerError(const string& error, int x, int y) {
+        Console::ClearSegment(x, y, 1);
+        Console::Goto(x, y);
+        Console::SetColor(Console::LIGHT_RED);
+        cout << error;
+        Console::SetColor(Console::WHITE);
     }
 };
 
@@ -157,6 +181,12 @@ public:
     void ResetPosition(int x, int y) {
         this->x = x;
         this->y = y;
+    }
+
+    void GoToCenter(int minx = 0, int miny = 0) {
+        COORD windowSize = Console::GetWindowSize();
+        this->x = max((windowSize.X - this->w) / 2 - 1, minx);
+        this->y = max((windowSize.Y - this->h) / 2 - 1, miny);
     }
 
     void SetBorderColor(Console::Color color) {
@@ -408,8 +438,8 @@ class WarningBox : public Box
         return width;
     }
 public:
-    WarningBox(int x, int y, int w, string title, string warning, string confirm = "YES", string reject = "NO")
-        : Box(x, y, w, 5, title), labelY(confirm), labelN(reject) {
+    WarningBox(int w, string title, string warning, string confirm = "CO", string reject = "KHONG")
+        : Box(1, 1, w, 5, title), labelY(confirm), labelN(reject) {
             this->borderType = 1;
             int curr = 0;
             while (curr < int(warning.size())) {
@@ -420,11 +450,17 @@ public:
                 curr += len;
                 this->h ++;
             }
+            this->GoToCenter();
         }
     ~WarningBox() = default;
 
     void Draw() override;
     bool operator()();
+
+    static bool Warning(int w, string title, string question, string confirm = "CO", string reject = "KHONG") {
+        WarningBox wrnBox(w, title, question, confirm, reject);
+        return wrnBox();
+    }
 };
 
 
@@ -436,7 +472,8 @@ private:
     function<void(int, int)> tableInit;
     function<void(int, int)> tableEnd;
     function<void(const T&)> tableShow;
-    int selection = -1;
+    function<void(int, int, const List<T>&)> summary;
+    int selection = 0;
     
     void UpdateStatus(int index) const {
         if (index < 0 || index >= int(this->data.size())) return;
@@ -452,33 +489,36 @@ private:
 
 public:
     TableBox(int x, int y, int w, const List<T>& d, function<void(int, int)> init, 
-    function<void(int, int)> close, function<void(const T&)> show)
-        : Box(x, y, w, 4), data(d), tableInit(init), tableEnd(close), tableShow(show) {}
+    function<void(int, int)> close, function<void(const T&)> show, 
+    function<void(int, int, const List<T>&)> sum = nullptr)
+        : Box(x, y, w, 4), data(d), tableInit(init), tableEnd(close), tableShow(show), summary(sum) {
+            if (sum != nullptr) this->h += 2;
+            this->h += data.size();
+        }
     ~TableBox() = default;
 
     void Draw() override;
-    int operator()(Console::Key& key);
+    int operator()(Console::Key&, bool = false);
 };
 
 template<typename T>
 inline void TableBox<T>::Draw()
 {
-    int newH = int(this->data.size()) + 4;
+    int newH = int(this->data.size()) + 4 + bool(this->summary) * 2;
     Console::ClearSegment(this->x, this->y, this->h, this->w);
     this->h = newH;
     Console::SetColor(Console::WHITE);
     this->tableInit(this->x, this->y);
     for (int i = 0; i < int(this->data.size()); i++) {
         Console::Goto(this->x, this->y + 3 + i);
-        
-       this->tableShow(data[i]);
-        
+        this->tableShow(data[i]);
     }
-    this->tableEnd(this->x, this->y + 3 + int(this->data.size()));
+    if (this->summary) this->summary(this->x, this->y + 3 + this->data.size(), data);
+    this->tableEnd(this->x, this->y + this->h - 1);
 }
 
 template<typename T>
-int TableBox<T>::operator()(Console::Key& key)
+int TableBox<T>::operator()(Console::Key& key, bool continuous)
 {
     if (this->data.empty()) {
         Console::SetColor(Console::WHITE);
@@ -487,7 +527,9 @@ int TableBox<T>::operator()(Console::Key& key)
 
     this->isUsed = true;
     Console::SetCursorVisible(false);
-    this->selection = 0;
+    if (!continuous) this->selection = 0;
+    if (this->selection >= data.size()) this->selection = data.size() - 1;
+
     this->UpdateStatus(this->selection);
     while (this->isUsed) {
         char c;
@@ -538,6 +580,7 @@ class InputHandler
             case Console::DOWN:  return 3;    
             case Console::LEFT:  return 4;
             case Console::RIGHT: return 5;
+            case Console::ESC:   return 6;
             default:             return -1;
         }
     }
@@ -545,8 +588,8 @@ class InputHandler
 public:
     InputHandler(T remaining, T maxval) 
         : remaining(remaining),
-          relations(int(maxval) + 1, List<T>(6, remaining)),
-          hasRelation(int(maxval) + 1, List<bool>(6, false))
+          relations(int(maxval) + 1, List<T>(7, remaining)),
+          hasRelation(int(maxval) + 1, List<bool>(7, false))
     {
         if (int(maxval) < 0) throw invalid_argument("Gia tri enum toi da khong hop le!");
     }
@@ -556,19 +599,19 @@ public:
         if (action == -1) throw invalid_argument("Phim ko hop le, khong the tao ket noi!");
         int start = int(before);
         int end = int(after);
-        if (start < 0 || start >= int(relations.size())
-            || end < 0 || end >= int(relations.size()))
+        if (start < 0 || start >= int(this->relations.size())
+            || end < 0 || end >= int(this->relations.size()))
             throw invalid_argument("Gia tri ket noi phai nam trong khoang (0, enum::max)!");
 
-        relations[start][action] = after;
-        hasRelation[start][action] = true;
+        this->relations[start][action] = after;
+        this->hasRelation[start][action] = true;
     }
 
     T GetDest(const T& before, const Console::Key& key) const {
         int action = this->GetCase(key);
         int start = int(before);
-        if (start < 0 || start >= int(relations.size())) return this->remaining;
-        if (action == -1 || !hasRelation[start][action]) return before;
-        return relations[start][action];
+        if (start < 0 || start >= int(this->relations.size())) return this->remaining;
+        if (action == -1 || !this->hasRelation[start][action]) return before;
+        return this->relations[start][action];
     }
 };

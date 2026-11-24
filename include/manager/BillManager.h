@@ -25,16 +25,16 @@ struct BillInYear {
     List<MonthlyBill*> bills;
 };
 
-void ManageBillsInMonth(Nhatro&, NavigationBox&, Console::Key&);
-void ManageBillsInYear(Nhatro&, NavigationBox&, Console::Key&);
+void ManageBillsInMonth(Nhatro&, NavigationBox&, Console::Key&, bool);
+void ManageBillsInYear(Nhatro&, NavigationBox&, Console::Key&, bool);
 void ManageBills(Nhatro&);
 void CreateBills(Nhatro&, Month);
 void AddBill(Room*, Month = Nhatro::today);
 void UpdateBill(MonthlyBill*);
 void UpdateBill(Room*);
 void UpdateIndex(Room*);
-void ManageIndex(Nhatro&, NavigationBox&, Console::Key&);
-void UpdateGeneralPrice(NavigationBox&, Console::Key&);
+void ManageIndex(Nhatro&, NavigationBox&, Console::Key&, bool);
+void UpdateGeneralPrice(NavigationBox&, Console::Key&, bool);
 void ShowFinanceReport(Nhatro&);
 
 List<MonthlyBill*> FilterBills(int, const List<MonthlyBill*>&);
@@ -56,7 +56,6 @@ bool FilterRoomWithDebtOverPrepaid(Room*);
 
 void SortBills(int, List<BillInMonth>&);
 bool CompareBillsRoom(Room*, Room*);
-bool CompareBillsPaymentDate(MonthlyBill*, MonthlyBill*);
 bool CompareBillsMonth(MonthlyBill*, MonthlyBill*);
 bool CompareBillsTotal(MonthlyBill*, MonthlyBill*);
 bool CompareBillsTotal1(MonthlyBill*, MonthlyBill*);
@@ -73,11 +72,13 @@ void BillInMonthTableInit(int x, int y);
 void BillInMonthTableEnd(int x, int y);
 int BillInMonthTableWidth();
 void BillInMonthTableShow(const BillInMonth&);
+void BillInMonthTotal(int x, int y, const List<BillInMonth>&);
 
 void BillInYearTableInit(int x, int y);
 void BillInYearTableEnd(int x, int y);
 int BillInYearTableWidth();
 void BillInYearTableShow(const BillInYear&);
+void BillInYearTotal(int x, int y, const List<BillInYear>&);
 
 void RoomBillTableInit(int x, int y);
 void RoomBillTableEnd(int x, int y);

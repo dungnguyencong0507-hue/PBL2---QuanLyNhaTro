@@ -3,12 +3,6 @@
 #include <header.h>
 #include <Room.h>
 
-enum Gender
-{
-    Male,
-    Female
-};
-
 class Tenant
 {
 protected:

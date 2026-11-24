@@ -8,9 +8,8 @@ string operator++(string& id)
         if (isdigit(id[i])) {
             if (id[i] == '9') {
                 id[i] = '0';
-                if (i > 0 && isdigit(id[i-1])) id[i-1]++;
             } else {
-                id[i]++;
+                ++id[i];
                 break;
             }
         }

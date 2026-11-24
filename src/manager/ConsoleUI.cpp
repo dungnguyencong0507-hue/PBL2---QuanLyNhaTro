@@ -66,7 +66,7 @@ bool ButtonBox::operator()(Console::Key& key)
             Console::SetColor(Console::WHITE);
             return true;
         }
-        else if (key == Console::ESC || key == Console::TAB || key == Console::UP 
+        else if (key == Console::ESC || key == Console::TAB || key == Console::UP || key == Console::F5
             || key == Console::DOWN || key == Console::LEFT || key == Console::RIGHT) {
             this->Quit();
             Console::SetColor(Console::WHITE);
@@ -125,7 +125,7 @@ void NavigationBox::Draw()
     for (int i = 0; i < int(this->items.size()); i++) {
         if (i == this->selection) {
             if (this->isUsed) Console::SetColor(Console::BLACK, Console::WHITE);
-            else Console::SetColor(Console::WHITE);
+            else Console::SetColor(Console::YELLOW);
         }
         else Console::SetColor(Console::GRAY);
 
@@ -163,7 +163,7 @@ int NavigationBox::operator()(Console::Key& key)
             this->Draw();
             return this->selection;
         }
-        else if (key == Console::ESC) {
+        else if (key == Console::ESC || key == Console::F5) {
             this->isUsed = false;
             Console::SetColor(Console::WHITE);
         }
@@ -174,7 +174,7 @@ int NavigationBox::operator()(Console::Key& key)
 int MenuBox::operator()(Console::Key& key) 
 {
     if (this->options.empty()) return -1;
-    this->isUsed = true;
+    this->Use();
 
     int prevSelect;
 
@@ -196,12 +196,12 @@ int MenuBox::operator()(Console::Key& key)
             this->UpdateStatus(prevSelect);
         }
         else if (key == Console::ENTER){
-            this->isUsed = false;
+            this->Quit();
             Console::SetColor(Console::WHITE);
             return this->selection;
         }
-        else if (key == Console::ESC){
-            this->isUsed = false;
+        else if (key == Console::ESC || key == Console::F5){
+            this->Quit();
         }
     }
 
@@ -242,7 +242,7 @@ int NumberMenuBox::operator()(Console::Key& key)
     while (this->isUsed) {
         char c;
         key = Console::Read(c);
-        if (key == Console::UP || key == Console::DOWN || key == Console::TAB 
+        if (key == Console::UP || key == Console::DOWN || key == Console::TAB  || key == Console::F5
             || key == Console::LEFT || key == Console::RIGHT || key == Console::ESC){
             this->Quit();
         }
@@ -404,7 +404,7 @@ bool FormBox::operator()(Console::Key& key)
             this->confirmed = true;
             this->isUsed = false;
         }
-        else if (key == Console::ESC) this->isUsed = false;
+        else if (key == Console::ESC || key == Console::F5) this->isUsed = false;
         else if (key == Console::BACKSPACE
             && this->curr < int(this->GetSize()) && !this->values[this->curr].empty()) {
             this->values[this->curr].pop_back();
@@ -469,7 +469,7 @@ void SingleLineBox::operator()(Console::Key& key)
         char c;
         key = Console::Read(c);
         if (key == Console::ENTER) this->isUsed = false;
-        if (key == Console::ESC || key == Console::TAB || key == Console::UP 
+        if (key == Console::ESC || key == Console::TAB || key == Console::UP || key == Console::F5
             || key == Console::DOWN || key == Console::LEFT || key == Console::RIGHT){
             this->Quit();
         }
@@ -486,6 +486,10 @@ void WarningBox::Draw()
     Console::SetCursorVisible(false);
     this->Clear();
     this->DrawBorder();
+
+    Console::Goto(this->x + 1, this->y + 1);
+    Console::SetColor(Console::YELLOW);
+    cout << center(this->title, this->w - 2);
 
     Console::SetColor(Console::WHITE);
     for (int i = 0; i < this->line.size(); i++) {
@@ -518,11 +522,6 @@ bool WarningBox::operator()()
             this->isUsed = false;
             Console::SetColor(Console::WHITE);
             return this->choice;
-        }
-        else if (key == Console::ESC) {
-            this->isUsed = false;
-            Console::SetColor(Console::WHITE);
-            return false;
         }
         else if (key == Console::LEFT && this->choice == 0) this->choice = 1;
         else if (key == Console::RIGHT && this->choice == 1) this->choice = 0;

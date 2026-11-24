@@ -4,6 +4,7 @@
 #include <Models.h>
 #include <string>
 #include <ConsoleUI.h>
+
 class Tenant;
 
 enum RoomType{
@@ -24,10 +25,8 @@ protected:
     List<Tenant*> tenants;                  //danh sach nguoi o
     ull prepaid = 0;                        //tien coc (VND)
     ull rentPrice;                          //gia thue (VND) 
-    bool elcEditable = 0;
     ull oldElectricIndex = 0;               //chi so dien cu
     ull newElectricIndex = 0;               //chi so dien moi
-    bool wtrEditable = 0;
     ull oldWaterIndex = 0;                  //chi so nuoc cu
     ull newWaterIndex = 0;                  //chi so dien moi
     List<MonthlyBill> monthlyBills;           //danh sach hoa don hang thang
@@ -46,6 +45,7 @@ public:
 
     bool IsRented() const;
     bool IsFull() const;
+    bool IsSingleGender(Gender&) const;
     const std::string& GetId() const;
     const std::string& GetName() const;
     int GetCapacity() const;
@@ -90,8 +90,6 @@ public:
     void SetWaterIndex(const ull&);
     void EditElectricIndex(const ull&);
     void EditWaterIndex(const ull&);
-    void SetElectricEdition(bool);
-    void SetWaterEdition(bool);
 
     void AddTenant(Tenant*);
     void RemoveTenant(Tenant*);
@@ -106,7 +104,6 @@ public:
     void AddBill(MonthlyBill);
     void RemoveBill(const Month&);
     void UpdateBill(const MonthlyBill&);
-    void PayBill(const Month& month, const Date& paymentDate);
     virtual ull calcRent() const = 0;
     
     // friend std::ostream& operator<<(std::ostream&, const Room&);

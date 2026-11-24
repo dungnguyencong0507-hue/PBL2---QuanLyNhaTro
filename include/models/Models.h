@@ -178,23 +178,20 @@ struct MonthlyBill
     
     ull totalCost;
     bool isPaid;
-    Date paymentDate;
 
     MonthlyBill() : month(1, 2024), room(nullptr), rentCost(0), trashCost(0), wifiCost(0),
                     serviceCost(0), damageCost(0),
                     oldElectricIndex(0), newElectricIndex(0), electricCost(0),
                     oldWaterIndex(0), newWaterIndex(0), waterCost(0),
-                    totalCost(0), isPaid(0), paymentDate(1, 1, 2024)  {}
+                    totalCost(0), isPaid(0)  {}
 
-    MonthlyBill(Month m, Room* room, ull rent, ull trash, ull wifi, ull service, ull damage,
-        ull oldElec, ull newElec, ull elecCost,
-        ull oldWater, ull newWater, ull waterCost,
-        ull total, bool paid, Date payment = Date(1, 1, 2024))
+    MonthlyBill(Month m, Room* room, ull rent, ull trash, ull wifi, ull service, ull damage, ull oldElec, 
+        ull newElec, ull elecCost, ull oldWater, ull newWater, ull waterCost, ull total, bool paid)
         : month(m), room(room), rentCost(rent), trashCost(trash), wifiCost(wifi),
           serviceCost(service), damageCost(damage),
           oldElectricIndex(oldElec), newElectricIndex(newElec), electricCost(elecCost),
           oldWaterIndex(oldWater), newWaterIndex(newWater), waterCost(waterCost),
-          totalCost(total), isPaid(paid), paymentDate(payment) {}
+          totalCost(total), isPaid(paid) {}
 };
 
 ostream& operator<<(ostream& o, const MonthlyBill& bill);

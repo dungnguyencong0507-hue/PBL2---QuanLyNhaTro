@@ -1,55 +1,34 @@
 #include <Nhatro.h>
 #include <vector>
+#include <ctime>
 using namespace std;
 
-Date Nhatro::today = { 1, 1, 2024 };
-
-Nhatro::Nhatro(const string& name, const string& address, const string& phone)
-    : name(name), address(address), phone(phone)
-{}
-
-Nhatro::~Nhatro()
-{}
-
-Nhatro& Nhatro::GetInstance(const string& name, const string& address, const string& phone)
+namespace
 {
-    static Nhatro instance(name, address, phone);
+    Date GetCurrentDate()
+    {
+        time_t now = time(nullptr);
+        tm* localTime = localtime(&now);
+        if (localTime == nullptr) {
+            throw runtime_error("Khong the lay thoi gian hien tai!");
+        }
+        return Date(localTime->tm_mday,
+                    localTime->tm_mon + 1,
+                    localTime->tm_year + 1900);
+    }
+}
+
+Date Nhatro::today = GetCurrentDate();
+
+Nhatro::Nhatro() {}
+Nhatro::~Nhatro() {}
+
+Nhatro& Nhatro::GetInstance()
+{
+    static Nhatro instance;
     return instance;
 }
 
-void Nhatro::SetAddress(const string& newAddress)
-{
-    this->address = newAddress;
-}
-void Nhatro::SetPhone(const string& newPhone)
-{
-    this->phone = newPhone;
-}
-const string& Nhatro::GetName() const
-{
-    return this->name;
-}
-void Nhatro::SetName(const string& newName)
-{
-    this->name = newName;
-}
-void Nhatro::SetDate(const Date& date)
-{
-    Nhatro::today = date;
-}
-
-const string& Nhatro::GetAddress() const
-{
-    return this->address;
-}
-const string& Nhatro::GetPhone() const
-{
-    return this->phone;
-}
-const Date& Nhatro::GetDate() const
-{
-    return Nhatro::today;
-}
 int Nhatro::GetNumRoom() const
 {
     return this->rooms.size();
@@ -124,14 +103,6 @@ bool CmpRoomsId(const unique_ptr<Room>& a, const unique_ptr<Room>& b)
 void Nhatro::SortRoomsById()
 {
     this->rooms.sort(CmpRoomsId);
-}
-
-ostream& operator<<(ostream& o, const Nhatro& nhatro)
-{
-    o << "Thong tin " << nhatro.name << ":\n"
-        << "Dia chi: " << nhatro.address << endl
-        << "Lien he: " << nhatro.phone << endl;
-    return o;
 }
 
 int Nhatro::FindRoom(const std::string& id)
@@ -215,14 +186,14 @@ void Nhatro::SaveGeneralData(const string& generalFile) const
 {
     ofstream oup("data/" + generalFile);
     if (!oup) throw runtime_error("Khong the luu file du lieu gia chung!");
-    oup << Room::internetCost << "|"
-        << Room::trashCost << "|"
-        << Room::serviceCost << "|"
-        << Room::electricUnitPrice << "|"
-        << Room::waterUnitPrice << "|"
-        << BasicRoom::stdRentPrice << "|"
-        << VipRoom::stdRentPrice << "|"
-        << StudioRoom::stdRentPrice ;
+    oup << Room::internetCost       << "|"
+        << Room::trashCost          << "|"
+        << Room::serviceCost        << "|"
+        << Room::electricUnitPrice  << "|"
+        << Room::waterUnitPrice     << "|"
+        << BasicRoom::stdRentPrice  << "|"
+        << VipRoom::stdRentPrice    << "|"
+        << StudioRoom::stdRentPrice << "|";
 }
 
 void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFile, const std::string& furnishingFile, const std::string& damageFile)
@@ -230,8 +201,7 @@ void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFi
     ifstream roomInp("data/" + roomFile);
     if (!roomInp) throw runtime_error("Khong the tai file du lieu phong!");
 {
-    string line, id, type, name, cap, floor, rentPrice, prepaid, oldElec, newElec, editElec,
-    oldWater, newWater, editWater, rentDate;
+    string line, id, type, name, cap, floor, rentPrice, prepaid, oldElec, newElec, oldWater, newWater, rentDate;
     while (getline(roomInp, line)){
         if (line.empty()) continue;
         if (line.back() == '\r') line.pop_back();
@@ -246,11 +216,9 @@ void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFi
         getline(iss, prepaid, '|');
         getline(iss, oldElec, '|');
         getline(iss, newElec, '|');
-        getline(iss, editElec, '|');
         getline(iss, oldWater, '|');
         getline(iss, newWater, '|');
-        getline(iss, editWater, '|');
-        getline(iss, rentDate);
+        getline(iss, rentDate, '|');
 
     try {
         unique_ptr<Room> newRoom;
@@ -269,10 +237,8 @@ void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFi
         newRoom->SetPrepaid(stoull(prepaid));
         newRoom->SetElectricIndex(stoull(oldElec));
         newRoom->SetElectricIndex(stoull(newElec));
-        newRoom->SetElectricEdition(editElec == "1");
         newRoom->SetWaterIndex(stoull(oldWater));
         newRoom->SetWaterIndex(stoull(newWater));
-        newRoom->SetWaterEdition(editWater == "1");
         if (!rentDate.empty()) newRoom->SetDate(Date(rentDate));
 
         this->AddRoom(move(newRoom));
@@ -317,7 +283,6 @@ void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFi
         getline(iss, newWaterIndex, '|');
         getline(iss, totalCost,     '|');
         getline(iss, isPaid,        '|');
-        getline(iss, paymentDate);
 
         while (index < this->rooms.size() && roomId != this->rooms[index]->GetId()) index++;
         if (index >= this->rooms.size()) break;
@@ -328,7 +293,6 @@ void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFi
             stoull(oldElecIndex), stoull(newElecIndex), stoull(electricCost),
             stoull(oldWaterIndex), stoull(newWaterIndex), stoull(waterCost),
             stoull(totalCost), (isPaid == "1"));
-        if (paymentDate != "") bill.paymentDate = Date(paymentDate);
         this->rooms[index]->AddBill(bill);
     }
     catch (const exception& e) {
@@ -358,7 +322,7 @@ void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFi
         getline(iss, roomId, '|');
         getline(iss, id, '|');
         getline(iss, name, '|');
-        getline(iss, price);
+        getline(iss, price, '|');
 
         while (index < this->rooms.size() && roomId != this->rooms[index]->GetId()) index++;
         if (index >= this->rooms.size()) break;
@@ -394,7 +358,7 @@ void Nhatro::LoadRoomData(const std::string& roomFile, const std::string& billFi
         getline(iss, date, '|');
         getline(iss, furnId, '|');
         getline(iss, descrip, '|');
-        getline(iss, cost);
+        getline(iss, cost, '|');
 
         while (index < this->rooms.size() && roomId != this->rooms[index]->GetId()) index++;
         if (index >= this->rooms.size()) break;
@@ -434,11 +398,9 @@ void Nhatro::SaveRoomData(const std::string& roomFile, const std::string& billFi
                 << room->GetPrepaid()   << "|"
                 << room->GetOldElectricIndex() << "|"
                 << room->GetNewElectricIndex() << "|"
-                << room->IsElectricEditable()  << "|"
                 << room->GetOldWaterIndex()    << "|"
                 << room->GetNewWaterIndex()    << "|"
-                << room->IsWaterEditable()  << "|"
-                << room->GetDate()
+                << (room->IsRented() ? to_string(room->GetDate()) : "") << "|"
                 << endl;
     }
     roomOup.close();
@@ -463,7 +425,6 @@ void Nhatro::SaveRoomData(const std::string& roomFile, const std::string& billFi
                     << bill.newWaterIndex    << "|"
                     << bill.totalCost        << "|"
                     << (bill.isPaid ? "1" : "0")  << "|";
-            if (bill.isPaid) billOup << bill.paymentDate;
             billOup << endl;
         }
     }
@@ -474,10 +435,10 @@ void Nhatro::SaveRoomData(const std::string& roomFile, const std::string& billFi
     if (!furnishingOup) throw runtime_error("Khong the luu file du lieu tien ich!");
     for (const auto& room : this->rooms){
         for (const auto& furnishing : room->GetFurnishings()){
-            furnishingOup << room->GetId()   << "|"
-                          << furnishing.id   << "|"
-                          << furnishing.name << "|"
-                          << furnishing.price
+            furnishingOup << room->GetId()    << "|"
+                          << furnishing.id    << "|"
+                          << furnishing.name  << "|"
+                          << furnishing.price << "|"
                           << endl;
         }
     }
@@ -492,7 +453,7 @@ void Nhatro::SaveRoomData(const std::string& roomFile, const std::string& billFi
                       << damage.date            << "|"
                       << damage.furnishing->id  << "|"
                       << damage.description     << "|"
-                      << damage.compen
+                      << damage.compen          << "|"
                       << endl;
         }
     }
@@ -518,19 +479,18 @@ void Nhatro::LoadTenantData(const std::string& tenantFile)
         getline(iss, home, '|');
         getline(iss, roomId, '|');
         getline(iss, isLeader, '|');
-        getline(iss, tmpRsd);
+        getline(iss, tmpRsd, '|');
 
     try {
-        unique_ptr<Tenant> newTenant = make_unique<Tenant>(id, name, static_cast<Gender>(std::stoi(gend)), phone, cccd, home);
+        unique_ptr<Tenant> newTenant = make_unique<Tenant>(id, name, static_cast<Gender>(std::stoi(gend)), 
+            phone, cccd, home);
         newTenant->SetTemporaryResidence(tmpRsd == "1");
         Tenant* tenant = newTenant.get();
         this->AddTenant(move(newTenant));
         if (!roomId.empty()){
             int roomIndex = this->FindRoom(roomId);
             if (roomIndex != -1){
-                this->rooms[roomIndex]->AddTenant(tenant);
-                tenant->SetRoom(this->rooms[roomIndex].get());
-                
+                this->rooms[roomIndex]->AddTenant(tenant);                
                 if (isLeader == "1") this->rooms[roomIndex]->SetRoomLeader(tenant);
             }
         }
@@ -561,9 +521,9 @@ void Nhatro::SaveTenantData(const std::string& tenantFile) const
                   << tenant->GetPhone()         << "|"
                   << tenant->GetHometown()      << "|"
                   << (tenant->GetRoom() != nullptr ? tenant->GetRoom()->GetId() : "") << "|"
-                  << (tenant->IsLeader() ? (tenant.get() == tenant->GetRoom()->GetRoomLeader() ? "1" : "0") : "") << "|"
-                  << (tenant->IsTemporaryResidence() ? "1" : "0") << "|";
-        tenantOup << endl;
+                  << (tenant->IsLeader() ? "1" : "0") << "|"
+                  << (tenant->IsTemporaryResidence() ? "1" : "0") << "|"
+                  << endl;
     }
     tenantOup.close();
     cout << "Luu du lieu khach thue thanh cong!\n";

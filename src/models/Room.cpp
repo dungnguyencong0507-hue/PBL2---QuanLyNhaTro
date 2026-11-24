@@ -24,6 +24,19 @@ bool Room::IsFull() const
 {
     return GetTenantCount() >= this->capacity;
 }
+bool Room::IsSingleGender(Gender& gen) const
+{
+    if (!this->IsRented()) return false;
+    bool singleGender = true;
+    for (int i=1; i<this->tenants.size(); i++) {
+        if (this->tenants[i]->GetGender() != this->tenants[i-1]->GetGender()) {
+            singleGender = false;
+            break;
+        }
+    }
+    gen = this->tenants.back()->GetGender();
+    return singleGender;
+}
 int Room::GetTenantCount() const
 {
     return tenants.size();
@@ -101,11 +114,13 @@ ull Room::GetNewWaterIndex() const
 }
 bool Room::IsElectricEditable() const
 {
-    return this->elcEditable;
+    if (this->monthlyBills.empty()) return true;
+    return this->oldElectricIndex >= this->monthlyBills.back().newElectricIndex;
 }
 bool Room::IsWaterEditable() const
 {
-    return this->wtrEditable;
+    if (this->monthlyBills.empty()) return true;
+    return this->oldWaterIndex >= this->monthlyBills.back().newWaterIndex;
 }
 
 // ===============================
@@ -181,41 +196,32 @@ void Room::SetServiceCost(const ull& p)
 void Room::SetElectricIndex(const ull& index)
 {
     if (index < this->newElectricIndex) 
-        throw runtime_error("Chi so dien moi phai lon hon chi so dien cu: " + this->newElectricIndex);
+        throw runtime_error("Chi so dien moi khong duoc nho hon chi so cu: " + to_string(this->newElectricIndex));
     this->oldElectricIndex = this->newElectricIndex;
     this->newElectricIndex = index;
-    this->elcEditable = true;
 }
 void Room::SetWaterIndex(const ull& index)
 {
     if (index < this->newWaterIndex) 
-        throw runtime_error("Chi so nuoc moi phai lon hon chi so nuoc cu: " + this->newWaterIndex);
+        throw runtime_error("Chi so nuoc moi khong duoc nho hon chi so cu: " + to_string(this->newWaterIndex));
     this->oldWaterIndex = this->newWaterIndex;
     this->newWaterIndex = index;
-    this->wtrEditable = true;
 }
 void Room::EditElectricIndex(const ull& index)
 {
-    if (!this->elcEditable) throw runtime_error("Khong duoc sua chi so dien");
+    if (!this->IsElectricEditable()) throw runtime_error("Khong duoc sua chi so dien");
     if (index < this->oldElectricIndex) 
-        throw runtime_error("Chi so dien moi phai lon hon chi so dien cu: " + this->oldElectricIndex);
+        throw runtime_error("Chi so dien moi khong duoc nho hon chi so cu: " + to_string(this->oldElectricIndex));
     this->newElectricIndex = index;
 }
 void Room::EditWaterIndex(const ull& index)
 {
-    if (!this->wtrEditable) throw runtime_error("Khong duoc sua chi so nuoc");
+    if (!this->IsWaterEditable()) throw runtime_error("Khong duoc sua chi so nuoc");
     if (index < this->oldWaterIndex) 
-        throw runtime_error("Chi so nuoc moi phai lon hon chi so nuoc cu: " + this->oldWaterIndex);
+        throw runtime_error("Chi so nuoc moi khong duoc nho hon chi so cu: " + to_string(this->oldWaterIndex));
     this->newWaterIndex = index;
 }
-void Room::SetElectricEdition(bool editable)
-{
-    this->elcEditable = editable;
-}
-void Room::SetWaterEdition(bool editable)
-{
-    this->wtrEditable = editable;
-}
+
 
 // ===============================
 //       ADD-REMOVE-UPDATE
@@ -262,7 +268,7 @@ void Room::AddFurnishing(Furnishing f)
         if (this->furnishings.empty()) f.id += "001";
         else {
             string currId = postsub(3, this->furnishings.back().id);
-            f.id += currId;
+            f.id += ++currId;
         }
     }
     this->furnishings.push_back(f);
@@ -310,6 +316,8 @@ void Room::RemoveDamage(Damage* dam)
 void Room::CreateBill(const Month& month)
 {
     if (!(this->monthlyBills.empty()) && month <= this->monthlyBills.back().month) return;
+    if (!this->monthlyBills.empty() && (this->oldElectricIndex < this->monthlyBills.back().newElectricIndex 
+        || this->oldWaterIndex < this->monthlyBills.back().newWaterIndex)) throw this->id;
 
     MonthlyBill bill{};
     bill.room = this;
@@ -322,97 +330,42 @@ void Room::CreateBill(const Month& month)
 
     bill.damageCost = 0;
     for(const auto& d : this->damages)
-        if(d.furnishing && month == d.date)
-            bill.damageCost += d.furnishing->price;
+        if(month == d.date) bill.damageCost += d.compen;
 
-    if (this->monthlyBills.empty() || this->oldElectricIndex >= this->monthlyBills.back().newElectricIndex) {
-        bill.oldElectricIndex = this->oldElectricIndex;
-        bill.newElectricIndex = this->newElectricIndex;
-        bill.electricCost = (bill.newElectricIndex - bill.oldElectricIndex) * Room::electricUnitPrice;
-    } else {
-        bill.oldElectricIndex = bill.newElectricIndex = this->monthlyBills.back().newElectricIndex;
-        bill.electricCost = 0;
-    }
+    bill.oldElectricIndex = this->oldElectricIndex;
+    bill.newElectricIndex = this->newElectricIndex;
+    bill.electricCost = (bill.newElectricIndex - bill.oldElectricIndex) * Room::electricUnitPrice;
 
-    if (this->monthlyBills.empty() || this->oldWaterIndex >= this->monthlyBills.back().newWaterIndex) {
-        bill.oldWaterIndex = this->oldWaterIndex;
-        bill.newWaterIndex = this->newWaterIndex;
-        bill.waterCost = (bill.newWaterIndex - bill.oldWaterIndex) * Room::waterUnitPrice;
-    } else {
-        bill.oldWaterIndex = bill.newWaterIndex = this->monthlyBills.back().newWaterIndex;
-        bill.waterCost = 0;
-    }
-    
+    bill.oldWaterIndex = this->oldWaterIndex;
+    bill.newWaterIndex = this->newWaterIndex;
+    bill.waterCost = (bill.newWaterIndex - bill.oldWaterIndex) * Room::waterUnitPrice;
 
     bill.totalCost = bill.rentCost + bill.serviceCost + bill.trashCost + bill.wifiCost
                     + bill.electricCost + bill.waterCost + bill.damageCost;
     
     bill.isPaid = false;
     this->monthlyBills.push_back(bill);
-    this->SetElectricEdition(false);
-    this->SetWaterEdition(false);
 }
 void Room::AddBill(MonthlyBill bill)
 {
-    if (this->GetBill(bill.month) != nullptr) 
-        throw runtime_error("Hoa don thang "+to_string(bill.month)+" da ton tai");
+    if (!this->monthlyBills.empty() && bill.month <= this->monthlyBills.back().month) 
+        throw runtime_error("Chi duoc them hoa don sau thang " 
+            + to_string(this->monthlyBills.back().month));
 
     bill.room = this;
-    if (this->monthlyBills.empty() || bill.month > this->monthlyBills.back().month) {
-        this->monthlyBills.push_back(bill);
-        return;
-    }
-
-    int left = 0, right = int(this->monthlyBills.size()-1), mid;
-    while (left < right) {
-        mid = left + (right - left) / 2;
-        if (this->monthlyBills[mid].month < bill.month) left = mid + 1;
-        else right = mid;
-    }
-
-    int index = left;
-    if ((index > 0 && this->monthlyBills[index-1].newElectricIndex > bill.oldElectricIndex) || 
-    (index+1 < this->monthlyBills.size() && this->monthlyBills[index+1].oldElectricIndex < bill.newElectricIndex)) {
-        WarningBox warn(50, 30, 40, "CANH BAO SAI LECH DU LIEU", 
-            "Chi so dien thang nay khong khop. Co muon luu hay khong?");
-        bool confirm = warn();
-        if (!confirm) return;
-    }
-    if ((index > 0 && this->monthlyBills[index-1].newWaterIndex > bill.oldWaterIndex) || 
-    (index+1 < this->monthlyBills.size() && this->monthlyBills[index+1].oldWaterIndex < bill.newWaterIndex)) {
-        WarningBox warn(50, 30, 40, "CANH BAO SAI LECH DU LIEU", 
-            "Chi so nuoc thang nay khong khop. Co muon luu hay khong?");
-        bool confirm = warn();
-        if (!confirm) return;
-    }
-
-    this->monthlyBills.insert(left, bill);
+    this->monthlyBills.push_back(bill);
 }
 void Room::RemoveBill(const Month& month)
 {
     int index = this->GetBillIndex(month);
-    if (index == -1) throw runtime_error("Khong ton tai hoa don thang " + to_string(month));
+    if (index == -1) return;
+    if (this->monthlyBills[index].isPaid) return;
     this->monthlyBills.erase(this->monthlyBills.begin() + index);
 }
 void Room::UpdateBill(const MonthlyBill& bill)
 {
     int index = this->GetBillIndex(bill.month);
     if (index == -1) throw runtime_error("Khong ton tai hoa don thang " + to_string(bill.month));
-
-    if ((index > 0 && this->monthlyBills[index-1].newElectricIndex > bill.oldElectricIndex) || 
-    (index+1 < this->monthlyBills.size() && this->monthlyBills[index+1].oldElectricIndex < bill.newElectricIndex)) {
-        WarningBox warn(50, 30, 40, "CANH BAO SAI LECH DU LIEU", 
-            "Chi so dien thang nay khong khop. Co muon luu hay khong?");
-        bool confirm = warn();
-        if (!confirm) return;
-    }
-    if ((index > 0 && this->monthlyBills[index-1].newWaterIndex > bill.oldWaterIndex) || 
-    (index+1 < this->monthlyBills.size() && this->monthlyBills[index+1].oldWaterIndex < bill.newWaterIndex)) {
-        WarningBox warn(50, 30, 40, "CANH BAO SAI LECH DU LIEU", 
-            "Chi so nuoc thang nay khong khop. Co muon luu hay khong?");
-        bool confirm = warn();
-        if (!confirm) return;
-    }
 
     this->monthlyBills[index] = bill;
     this->monthlyBills[index].room = this;
@@ -436,15 +389,6 @@ int Room::GetBillIndex(const Month& m) const
     }
     return -1;
 }
-void Room::PayBill(const Month& month, const Date& paymentDate)
-{
-    MonthlyBill* bill = this->GetBill(month);
-    if (bill == nullptr) throw runtime_error("Khong ton tai hoa don thang " + to_string(month.month) + "/" + to_string(month.year));
-    if (bill->isPaid) throw runtime_error("Hoa don thang " + to_string(month.month) + "/" + to_string(month.year) + " da duoc thanh toan");
-    
-    bill->isPaid = true;
-    bill->paymentDate = paymentDate;
-}
 ull Room::GetDebt() const
 {
     ull debt = 0;
@@ -454,15 +398,3 @@ ull Room::GetDebt() const
     }
     return debt;
 }
-// ostream& operator<<(ostream& o, const Room& room)
-// {
-//     o << std::left << BORDER_V
-//        << std::setw(ROOM_TYPE_W) << room.GetRoomType().substr(0, ROOM_TYPE_W) << BORDER_V
-//        << std::setw(ROOM_ID_W) << room.id.substr(0, ROOM_ID_W) << BORDER_V
-//        << std::setw(ROOM_NAME_W) << room.name.substr(0, ROOM_NAME_W) << BORDER_V
-//        << std::setw(ROOM_CAP_W) << std::to_string(room.GetTenantCount()) + "/" + std::to_string(room.capacity) << BORDER_V
-//        << std::setw(ROOM_FLOOR_W) << room.floor << BORDER_V
-//        << std::setw(ROOM_PRICE_W) << std::to_string(room.GetRentPrice()).substr(0, ROOM_PRICE_W) << BORDER_V
-//        << std::setw(ROOM_AVAILABLE_W) << (room.IsRented() ? (room.IsFull() ? "HET" : "CON") : "TRONG") << BORDER_V;
-//     return o;
-// }

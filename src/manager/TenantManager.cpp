@@ -11,8 +11,8 @@ void ManageTenants(Nhatro& nhatro)
     tenantManager.AddFilter("Nguoi dai dien", FilterRepresentativeTenants);
     tenantManager.AddFilter("Chua dang ki tam tru", FilterTenantsNotTmpRsd);
     tenantManager.AddFilter("Da dang ki tam tru", FilterTenantsGotTmpRsd);
-    tenantManager.AddSortComparison("Theo ten tang dan", CompareTenantsName);
-    tenantManager.AddSortComparison("Theo ten giam dan", CompareTenantsName1);
+    tenantManager.AddSortComparison("Theo ten", CompareTenantsName);
+    tenantManager.AddSortComparison("Theo gioi tinh", CompareTenantsGender);
     tenantManager.AddSortComparison("Theo phong", CompareTenantsRoom);
 
     tenantManager.Draw();
@@ -44,7 +44,6 @@ bool SearchTenant(Tenant* tenant, const string& query) // Theo ten, cccd, sdt, q
 
     return false;
 }
-
 bool FilterRentingTenants(Tenant* tenant)
 {
     return tenant->IsRenting();
@@ -66,11 +65,20 @@ bool FilterTenantsNotTmpRsd(Tenant* tenant){
 }
 bool CompareTenantsName(Tenant* tenant1, Tenant* tenant2)
 {
-    return tenant1->GetName() < tenant2->GetName();
+    string fullname1 = tenant1->GetName();
+    int i = fullname1.rfind(' ', tenant1->GetName().size() - 1);
+    string lastname1 = fullname1.substr(i + 1, fullname1.size() - i);
+    
+    string fullname2 = tenant2->GetName();
+    int j = fullname2.rfind(' ', tenant2->GetName().size() - 1);
+    string lastname2 = fullname2.substr(j + 1, fullname2.size() - i);
+
+    if (lastname1 == lastname2) return fullname1 < fullname2;
+    return lastname1 < lastname2;
 }
-bool CompareTenantsName1(Tenant* tenant1, Tenant* tenant2)
+bool CompareTenantsGender(Tenant* tenant1, Tenant* tenant2)
 {
-    return tenant1->GetName() > tenant2->GetName();
+    return tenant1->GetGender() < tenant2->GetGender();
 }
 bool CompareTenantsRoom(Tenant* tenant1, Tenant* tenant2)
 {
@@ -93,7 +101,7 @@ FormBox GetTenantDetails(Tenant* tenant, int x, int y, bool draw = 0)
     tenantDetailsBox.AddField("Que quan", tenant->GetHometown());
     tenantDetailsBox.AddChosenField("Dang ky tam tru", {"CHUA", "ROI"}, tenant->IsTemporaryResidence());
     string status = (tenant->IsRenting() ? (tenant->IsLeader() ? "Truong phong " + tenant->GetRoom()->GetId() 
-                    : "Da thue phong " + tenant->GetRoom()->GetId()) : "Chua thue phong");
+                    : "Dang thue phong " + tenant->GetRoom()->GetId()) : "Chua thue phong");
     tenantDetailsBox.AddConstField("Trang thai", status);
 
     if (draw) tenantDetailsBox.Draw();
@@ -112,15 +120,21 @@ void GetTenantForm(int x, int y, Nhatro& nhatro, Tenant* tenant = nullptr)
         tenantForm.AddField("So dien thoai *");
         tenantForm.AddField("Can cuoc cong dan *");
         tenantForm.AddField("Que quan");
+        tenantForm.GoToCenter(x, y);
     }
 
     string tenantName, tenantPhone, tenantCCCD, tenantHometown;
     int gender, tmpRsd;
     Console::Key key;
     bool confirm;
+    string error;
 
     tenantForm.Draw();
     while (true) {
+    if (!error.empty()) {
+        Console::DrawManagerError(error, x, tenantForm.GetY() + tenantForm.GetH());
+        error.clear();
+    }
     try {
         confirm = tenantForm(key);
         if (key == Console::ESC) return;
@@ -161,44 +175,15 @@ void GetTenantForm(int x, int y, Nhatro& nhatro, Tenant* tenant = nullptr)
                 tenant->SetHometown(tenantHometown);
                 tenant->SetTemporaryResidence(tmpRsd == 1);
             }
-
-            Console::Goto(x, tenantForm.GetY() + tenantForm.GetH());
-            Console::SetColor(Console::WHITE);
-            if (tenant) {
-                cout << "Cap nhat phong thanh cong ";
-                system("pause");
-            }
-            Console::ClearSegment(x, tenantForm.GetY() + tenantForm.GetH(), 2, 100);
             return;
         }   
     }
     catch (const exception& e) {
-        Console::ClearSegment(x, tenantForm.GetY() + tenantForm.GetH(), 2, 100);
-        Console::Goto(x, tenantForm.GetY() + tenantForm.GetH());
-        Console::SetColor(Console::RED);
-        cout << e.what();
+        error = e.what();
     }
     catch (const char* e) {
-        Console::ClearSegment(x, tenantForm.GetY() + tenantForm.GetH(), 2, 100);
-        Console::Goto(x, tenantForm.GetY() + tenantForm.GetH());
-        Console::SetColor(Console::RED);
-        cout << e;
+        error = e;
     }
-    catch (const string& e) {
-        Console::ClearSegment(x, tenantForm.GetY() + tenantForm.GetH(), 2, 100);
-        Console::Goto(x, tenantForm.GetY() + tenantForm.GetH());
-        Console::SetColor(Console::RED);
-        cout << e;
-    }
-    catch (...) {
-        Console::ClearSegment(x, tenantForm.GetY() + tenantForm.GetH(), 2, 100);
-        Console::Goto(x, tenantForm.GetY() + tenantForm.GetH());
-        Console::SetColor(Console::RED);
-        cout << "Loi khong xac dinh";
-    }
-        Console::Goto(x, tenantForm.GetY() + tenantForm.GetH() + 1);
-        Console::SetColor(Console::WHITE);
-        system("pause");
     }
 }
 
@@ -214,13 +199,8 @@ void AddTenantToRoom(Nhatro& nhatro, Tenant* tenant)
     system("cls");
     int padding = 3;
 
-    Console::SetColor(Console::YELLOW);
-    Console::Goto(padding, 1);
-    cout << "CHECK IN CHO KHACH THUE " << tenant->GetName() << " (SDT: " << tenant->GetPhone() << ")";
-
     string query = "";
     SingleLineBox searchRoomBox(padding, padding, 50, "TIM KIEM", query);
-    searchRoomBox.Draw();
 
     List<Room*> availRooms, results;
     auto& rooms = nhatro.GetRooms();
@@ -230,12 +210,27 @@ void AddTenantToRoom(Nhatro& nhatro, Tenant* tenant)
     results = availRooms;
     TableBox<Room*> availRoomsBox(searchRoomBox.GetX(), searchRoomBox.GetY()+searchRoomBox.GetH(), 
                     RoomTableWidth(), results, RoomTableInit, RoomTableEnd, RoomTableShow);
-    availRoomsBox.Draw();
 
     bool search = true;
+    bool redraw = true;
+    string error;
     Console::Key key;
     while (true) {
     try {
+        if (redraw) {
+            system("cls");
+            Console::SetColor(Console::YELLOW);
+            Console::Goto(padding, 1);
+            cout << "CHECK IN CHO KHACH THUE " << tenant->GetName() << " (SDT: " << tenant->GetPhone() << ")";
+            searchRoomBox.Draw();
+            availRoomsBox.Draw();
+            redraw = false;
+        }
+        if (!error.empty()) {
+            Console::DrawManagerError(error, searchRoomBox.GetX(), searchRoomBox.GetY() - 1);
+            error.clear();
+        }
+
         if (search) {
             searchRoomBox(key);
             if (key == Console::DOWN) search = false;
@@ -259,28 +254,31 @@ void AddTenantToRoom(Nhatro& nhatro, Tenant* tenant)
             int choice = availRoomsBox(key);
 
             if (choice != -1) {
+                Gender currGend;
+                bool singleGender = results[choice]->IsSingleGender(currGend);
+                if (singleGender && currGend != tenant->GetGender()) {
+                    bool confirm = WarningBox::Warning(30, "CANH BAO", 
+                        "Co xac nhan them nguoi khac gioi vao phong khong?");
+                    redraw = true;
+                    if (!confirm) continue;
+                }
+                if (!results[choice]->IsRented()) results[choice]->SetDate(Nhatro::today);
                 results[choice]->AddTenant(tenant);
                 break;
             }
+            else search = true;
+            key = Console::OTHER;
         }
 
         if (key == Console::ESC) return;
         continue;
     }
     catch (const exception& e) {
-        Console::ClearSegment(padding, padding - 1, 1, 100);
-        Console::Goto(padding, padding - 1);
-        Console::SetColor(Console::RED);
-        cout << e.what() << " ";
+        error = e.what();
     }
     catch (const char* e) {
-        Console::ClearSegment(padding, padding - 1, 1, 100);
-        Console::Goto(padding, padding - 1);
-        Console::SetColor(Console::RED);
-        cout << e << " ";
+        error = e;
     }
-        Console::SetColor(Console::WHITE);
-        system("pause");
     }
 }
 
@@ -293,8 +291,6 @@ void UpdateTenant(Nhatro& nhatro, Tenant* tenant)
 
     int startX = navBox.GetX(), startY = navBox.GetY() + 4;
 
-    ButtonBox updateBtn(startX, startY, 30, "CHINH SUA THONG TIN PHONG");
-
     ButtonBox checkInBtn(startX, startY, 20, "NHAN PHONG");
     ButtonBox checkOutBtn(startX, startY, 20, "TRA PHONG");
 
@@ -305,7 +301,6 @@ void UpdateTenant(Nhatro& nhatro, Tenant* tenant)
         IN_OUT
     };
     InputHandler<Action> btnLink(NONE, IN_OUT);
-    btnLink.AddRelation(UPDATE, Console::UP, NAVIGATION);
     btnLink.AddRelation(IN_OUT, Console::UP, NAVIGATION);
 
     Console::Key key;
@@ -313,6 +308,7 @@ void UpdateTenant(Nhatro& nhatro, Tenant* tenant)
     bool isClick;
     int page = 0, currPage;
     Action action = NAVIGATION;
+    string error;
 
     while (true) {
     try {
@@ -320,26 +316,28 @@ void UpdateTenant(Nhatro& nhatro, Tenant* tenant)
             system("cls");
             navBox.Draw();
         }
+        if (!error.empty()) {
+            Console::DrawManagerError(error, startX, startY - 1);
+            error.clear();
+        }
 
         if (page == 0) {
             if (redraw) {
-                updateBtn.Draw();
-                GetTenantDetails(tenant, startX, startY + updateBtn.GetH(), true);
+                GetTenantDetails(tenant, startX, startY, true);
                 redraw = false;
             }
 
             if (action == UPDATE) {
-                isClick = updateBtn(key);
-                if (isClick) {
-                    GetTenantForm(startX, startY + updateBtn.GetH(), nhatro, tenant);
-                }
+                GetTenantForm(startX, startY, nhatro, tenant);
+                action = NAVIGATION;
+                redraw = true;
             }
         }
         else if (page == 1) {
             if (redraw) {
                 if (tenant->GetRoom() != nullptr) {
                     checkOutBtn.Draw();
-                    GetRoomDetails(tenant->GetRoom(), checkInBtn.GetX() + checkInBtn.GetW(), startY, true);
+                    GetRoomDetails(tenant->GetRoom(), startX, checkInBtn.GetY() + checkInBtn.GetH(), true);
                 }
                 else {
                     checkInBtn.Draw();
@@ -351,8 +349,10 @@ void UpdateTenant(Nhatro& nhatro, Tenant* tenant)
                 if (tenant->GetRoom() != nullptr) {
                     isClick = checkOutBtn(key);
                     if (isClick) {
-                        tenant->GetRoom()->RemoveTenant(tenant);
                         redraw = true;
+                        bool confirm = WarningBox::Warning(30, "XAC NHAN", 
+                            "Xac nhan khach thue tra phong", "XAC NHAN", "HUY");
+                        if (confirm) tenant->GetRoom()->RemoveTenant(tenant);
                     }
                 }
                 else {
@@ -386,14 +386,13 @@ void UpdateTenant(Nhatro& nhatro, Tenant* tenant)
         }
 
         if (key == Console::ESC) return;
+        if (key == Console::F5) redraw = true;
     }
     catch (const exception& e) {
-        Console::SetColor(Console::RED);
-        cout << e.what();
+        error = e.what();
     }
     catch (const char* e) {
-        Console::SetColor(Console::RED);
-        cout << e;
+        error = e;
     }
     }
 }
@@ -419,7 +418,7 @@ void TenantTableInit(int x, int y)
         << setw(TENANT_CCCD_W)      << "CCCD"           << BORDER_V
         << setw(TENANT_PHONE_W)     << "SDT"            << BORDER_V
         << setw(TENANT_GENDER_W)    << "Gioi tinh"      << BORDER_V
-        << setw(TENANT_ROOM_W)      << "Da thue phong"  << BORDER_V
+        << setw(TENANT_ROOM_W)      << "Dang thue phong"<< BORDER_V
         << setw(TENANT_TMP_RSD_W)   << "Dang ki tam tru"<< BORDER_V
         << setw(TENANT_NOTE_W)      << "Ghi chu"        << BORDER_V;
 
@@ -435,7 +434,6 @@ void TenantTableInit(int x, int y)
         << Repeat(TENANT_NOTE_W, BORDER_H)
         << BORDER_LT;
 }
-
 void TenantTableEnd(int x, int y)
 {
     Console::Goto(x, y);
@@ -450,13 +448,11 @@ void TenantTableEnd(int x, int y)
         << Repeat(TENANT_NOTE_W, BORDER_H)
         << BORDER_BR;
 }
-
 int TenantTableWidth()
 {
     return TENANT_ID_W + TENANT_NAME_W + TENANT_CCCD_W + TENANT_PHONE_W + TENANT_GENDER_W 
             + TENANT_ROOM_W + TENANT_TMP_RSD_W + TENANT_NOTE_W + 9;
 }
-
 void TenantTableShow(Tenant* const& tenant)
 {
     if (tenant == nullptr) {
@@ -470,7 +466,7 @@ void TenantTableShow(Tenant* const& tenant)
         << setw(TENANT_PHONE_W)     << tenant->GetPhone()   << BORDER_V
         << setw(TENANT_GENDER_W)    << (tenant->GetGender() == Male ? "Nam" : "Nu")   << BORDER_V
         << setw(TENANT_ROOM_W)      << (tenant->IsRenting()
-            ? tenant->GetRoom()->GetName().substr(0, TENANT_ROOM_W) : "Khong")        << BORDER_V
+            ? postsub(TENANT_ROOM_W, tenant->GetRoom()->GetName()) : "")        << BORDER_V
         << setw(TENANT_TMP_RSD_W) << (tenant->IsTemporaryResidence() ? "Roi" : "Chua") << BORDER_V
         << setw(TENANT_NOTE_W) << (tenant->IsLeader() ? "TRUONG PHONG" : "") << BORDER_V;
 }
