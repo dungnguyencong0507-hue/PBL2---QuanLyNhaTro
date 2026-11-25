@@ -422,7 +422,7 @@ void AddDamageToRoom(Room* room, Furnishing* furn)
     FormBox addDamageBox(padding, padding, 100, 0.8, "BAO HONG: " + furn->name);
     addDamageBox.AddField("Ngay bao *", to_string(Nhatro::today));
     addDamageBox.AddField("Mo ta *");
-    addDamageBox.AddField("Boi thuong *", to_string(furn->price), "", " VND");
+    addDamageBox.AddField("Boi thuong *", to_string(furn->price/2), "", " VND");
 
     string damDateStr, damDescr, damCostStr;
     ull damCost;

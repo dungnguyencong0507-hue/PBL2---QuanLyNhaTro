@@ -184,7 +184,7 @@ void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key, bool redraw)
 
     int padding = navBox.GetX();
     FormBox priceBox(navBox.GetX(), navBox.GetY() + navBox.GetH() + 1, 70, 0.45, "BANG GIA CHUNG");
-    priceBox.AddField("Don gia dien", to_string(Room::electricUnitPrice), "", " VND/kWh");
+    priceBox.AddField("Don gia dien", to_string(Room::electricUnitPrice100), "", " VND/kWh");
     priceBox.AddField("Don gia nuoc", to_string(Room::waterUnitPrice), "", " VND/m3");
     priceBox.AddField("Gia cuoc Internet", to_string(Room::internetCost), "", " VND/phong");
     priceBox.AddField("Don gia dich vu", to_string(Room::serviceCost), "", " VND/nguoi");
@@ -219,7 +219,7 @@ void UpdateGeneralPrice(NavigationBox& navBox, Console::Key& key, bool redraw)
             vip = SToULL(priceBox.GetValue(6));
             studio = SToULL(priceBox.GetValue(7));
 
-            Room::electricUnitPrice = uElec;
+            Room::SetElectricUnitPrice(uElec);
             Room::waterUnitPrice = uWtr;
             Room::internetCost = inte;
             Room::serviceCost = serv;
@@ -264,8 +264,7 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
     ButtonBox deleteAllBtn(startX, addAllBtn.GetY() + addAllBtn.GetH(), toolBarW, "XOA TOAN BO HOA DON");
     ButtonBox detailBtn(startX, deleteAllBtn.GetY() + deleteAllBtn.GetH(), toolBarW, "XEM VA CAP NHAT HOA DON");
     ButtonBox historyBtn(startX, detailBtn.GetY() + detailBtn.GetH(), toolBarW, "XEM LICH SU HOA DON");
-    ButtonBox addBtn(startX, historyBtn.GetY() + historyBtn.GetH(), toolBarW, "TAO HOA DON THU CONG");
-    ButtonBox deleteBtn(startX, addBtn.GetY() + addBtn.GetH(), toolBarW, "XOA HOA DON");
+    ButtonBox deleteBtn(startX, historyBtn.GetY() + historyBtn.GetH(), toolBarW, "XOA HOA DON");
     string searchValue = "";
     SingleLineBox searchBox(filterBox.GetX() + toolBarW + 1, startY, searchBoxW, "TIM KIEM", searchValue);
 
@@ -286,7 +285,6 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
         NAVIGATION,
         FILTER,
         SORT,
-        ADD,
         ADDALL,
         DETAIL,
         HISTORY,
@@ -309,22 +307,19 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
     btnLink.AddRelation(REMOVEALL,  Console::UP,    ADDALL);
     btnLink.AddRelation(DETAIL,     Console::UP,    REMOVEALL);
     btnLink.AddRelation(HISTORY,    Console::UP,    DETAIL);
-    btnLink.AddRelation(ADD,        Console::UP,    HISTORY);
-    btnLink.AddRelation(REMOVE,     Console::UP,    ADD);
+    btnLink.AddRelation(REMOVE,     Console::UP,    HISTORY);
     btnLink.AddRelation(FILTER,     Console::DOWN,  SORT);
     btnLink.AddRelation(SORT,       Console::DOWN,  ADDALL);
     btnLink.AddRelation(ADDALL,     Console::DOWN,  REMOVEALL);
     btnLink.AddRelation(REMOVEALL,  Console::DOWN,  DETAIL);
     btnLink.AddRelation(DETAIL,     Console::DOWN,  HISTORY);
-    btnLink.AddRelation(HISTORY,    Console::DOWN,  ADD);
-    btnLink.AddRelation(ADD,        Console::DOWN,  REMOVE);
+    btnLink.AddRelation(HISTORY,    Console::DOWN,  REMOVE);
     btnLink.AddRelation(FILTER,     Console::RIGHT, SEARCH);
     btnLink.AddRelation(SORT,       Console::RIGHT, SEARCH);
     btnLink.AddRelation(ADDALL,     Console::RIGHT, SEARCH);
     btnLink.AddRelation(REMOVEALL,  Console::RIGHT, SEARCH);
     btnLink.AddRelation(HISTORY,    Console::RIGHT, SEARCH);
     btnLink.AddRelation(DETAIL,     Console::RIGHT, SEARCH);
-    btnLink.AddRelation(ADD,        Console::RIGHT, SEARCH);
     btnLink.AddRelation(REMOVE,     Console::RIGHT, SEARCH);
     btnLink.AddRelation(SEARCH,     Console::RIGHT, MONTH);
     btnLink.AddRelation(MONTH,      Console::RIGHT, YEAR);
@@ -359,7 +354,6 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
             deleteAllBtn.Draw();
             detailBtn.Draw();
             historyBtn.Draw();
-            addBtn.Draw();
             deleteBtn.Draw();
             searchBox.Draw();
             monBox.Draw();
@@ -388,18 +382,6 @@ void ManageBillsInMonth(Nhatro& nhatro, NavigationBox& navBox, Console::Key& key
                 dataBox.Draw();
                 sortChoice = choice;
             } 
-        }
-        if (selection == ADD) {
-            bool result = addBtn(key);
-            if (result) {
-                int choice = dataBox(key, true);
-                if (choice != -1) {
-                    if (fBillsInMonth[choice].bill != nullptr) throw runtime_error("Thang nay da co hoa don");
-                    reload = true;
-                    AddBill(fBillsInMonth[choice].room, month);
-                }
-                key = Console::OTHER;
-            }
         }
         if (selection == ADDALL) {
             bool result = addAllBtn(key);
@@ -683,27 +665,28 @@ void CreateBills(Nhatro& nhatro, Month month)
         throw "Can cap nhat so dien nuoc phong " + needActionRooms;
     }
 }
-bool GetBillForm(MonthlyBill* bill, const string& title, bool add = 0) {
+void UpdateBill(MonthlyBill* bill)
+{
+    if (bill == nullptr) throw runtime_error("Hoa don khong ton tai");
     system("cls");
     int padding = 3;
-    FormBox billBox(padding, padding, 80, 0.6, title);
+    FormBox billBox(padding, padding, 80, 0.6, "CAP NHAT HOA DON");
     billBox.AddConstField("Phong", bill->room->GetName());
-    billBox.AddChosenField("Da thanh toan", {"CHUA", "ROI"}, bill->isPaid); 
     billBox.AddConstField("Ky thanh toan", to_string(bill->month));
+    billBox.AddChosenField("Da thanh toan", {"CHUA", "ROI"}, bill->isPaid); 
     billBox.AddField("Tien thue phong", to_string(bill->rentCost), "", " VND");
     billBox.AddField("Tien rac", to_string(bill->trashCost), "", " VND");
     billBox.AddField("Tien mang", to_string(bill->wifiCost), "", " VND");
     billBox.AddField("Tien dich vu", to_string(bill->serviceCost), "", " VND");
     billBox.AddField("Phi thiet hai", to_string(bill->damageCost), "", " VND");
-    billBox.AddConstField("Chi so dien cu", to_string(bill->oldElectricIndex) + " kWh"); 
-    billBox.AddConstField("Chi so dien moi", to_string(bill->newElectricIndex) + " kWh"); 
-    billBox.AddField("Tien dien", to_string(bill->electricCost/(bill->newElectricIndex - bill->oldElectricIndex)), 
-        to_string(bill->electricCost) + " VND (Don gia: ", " VND/kWh)");
-    billBox.AddConstField("Chi so nuoc cu", to_string(bill->oldWaterIndex) + " m3"); 
-    billBox.AddConstField("Chi so nuoc moi", to_string(bill->newWaterIndex) + " m3"); 
+    billBox.AddConstField("Chi so dien", to_string(bill->oldElectricIndex) + " -> " + to_string(bill->newElectricIndex) 
+        + "(" + to_string(bill->newElectricIndex - bill->oldElectricIndex) + " kWh)");
+    billBox.AddConstField("Tien dien", to_string(bill->electricCost) + " VND");
+    billBox.AddConstField("Chi so nuoc", to_string(bill->oldWaterIndex) + " -> " + to_string(bill->newWaterIndex) 
+        + "(" + to_string(bill->newWaterIndex - bill->oldWaterIndex) + " m3)"); 
     billBox.AddField("Tien nuoc", to_string(bill->waterCost/(bill->newWaterIndex - bill->oldWaterIndex)), 
         to_string(bill->waterCost) + " VND (Don gia: ", " VND/m3)");
-    billBox.GoToCenter();
+    billBox.GoToCenter(padding, padding);
     billBox.Draw();
 
     ull uElec, uWtr;
@@ -717,25 +700,21 @@ bool GetBillForm(MonthlyBill* bill, const string& title, bool add = 0) {
     try {
         Console::Key key;
         bool confirm = billBox(key);
-        if (key == Console::ESC) return false;
+        if (key == Console::ESC) return;
         if (confirm) {
-            bill->isPaid = billBox.GetChosenValue(1);
+            bill->isPaid = billBox.GetChosenValue(2);
             bill->rentCost = SToULL(billBox.GetValue(3));
             bill->trashCost = SToULL(billBox.GetValue(4));
             bill->wifiCost = SToULL(billBox.GetValue(5));
             bill->serviceCost = SToULL(billBox.GetValue(6));
             bill->damageCost = SToULL(billBox.GetValue(7));
-            uElec = SToULL(billBox.GetValue(10));
-            uWtr = SToULL(billBox.GetValue(13));
+            uWtr = SToULL(billBox.GetValue(11));
 
-            bill->electricCost = uElec * (bill->newElectricIndex - bill->oldElectricIndex);
             bill->waterCost = uWtr * (bill->newWaterIndex - bill->oldWaterIndex);
             bill->totalCost = bill->rentCost + bill->trashCost + bill->wifiCost + bill->serviceCost 
             + bill->damageCost + bill->electricCost + bill->waterCost;
 
-            if (add) bill->room->AddBill(*bill);
-            else bill->room->UpdateBill(*bill);
-            return true;
+            return;
         }
     }
     catch (const exception& e) {
@@ -752,28 +731,6 @@ bool GetBillForm(MonthlyBill* bill, const string& title, bool add = 0) {
     }
     }
 } 
-void AddBill(Room* room, Month mon)
-{
-    MonthlyBill* newBill = new MonthlyBill;
-    newBill->room = room;
-    newBill->month = mon;
-    newBill->oldElectricIndex = room->GetOldElectricIndex();
-    newBill->newElectricIndex = room->GetNewElectricIndex();
-    newBill->electricCost = Room::electricUnitPrice * (newBill->newElectricIndex - newBill->oldElectricIndex);
-    newBill->oldWaterIndex = room->GetOldWaterIndex();
-    newBill->newWaterIndex = room->GetNewWaterIndex();
-    newBill->waterCost = Room::waterUnitPrice * (newBill->newWaterIndex - newBill->oldWaterIndex);
-    bool success = GetBillForm(newBill, "TAO HOA DON MOI", true);
-
-    if (!success) throw "Tao hoa don khong thanh cong";
-}
-void UpdateBill(MonthlyBill* bill)
-{
-    if (bill == nullptr) throw runtime_error("Hoa don khong ton tai");
-    MonthlyBill tmpBill = *bill;
-    bool success = GetBillForm(&tmpBill, "CAP NHAT HOA DON");
-    if (!success) throw "Cap nhat hoa don khong thanh cong";
-}
 void UpdateBill(Room* room)
 {
     system("cls");

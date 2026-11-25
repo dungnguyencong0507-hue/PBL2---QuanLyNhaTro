@@ -34,7 +34,9 @@ protected:
     Date rentedDate;                        //ngay bat dau thue
 
 public:
-    static ull electricUnitPrice;           //gia dien theo don vi (VND/kWh)
+    static ull electricUnitPrice100;           //gia dien theo don vi (VND/kWh)
+    static ull electricUnitPrice200;
+    static ull electricUnitPrice300;
     static ull waterUnitPrice;              //gia nuoc theo don vi (VND/m3)
     static ull internetCost;                //gia internet (VND/phong)
     static ull trashCost;                   //tien thu rac (VND/nguoi)

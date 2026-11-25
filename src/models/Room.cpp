@@ -1,7 +1,7 @@
 #include <Nhatro.h>
 using namespace std;
 
-ull Room::electricUnitPrice = 3500;
+ull Room::electricUnitPrice100 = 3500;
 ull Room::waterUnitPrice = 8000;
 ull Room::internetCost = 50000;
 ull Room::trashCost = 15000;
@@ -175,7 +175,9 @@ void Room::SetRoomLeader(Tenant* t)
 }
 void Room::SetElectricUnitPrice(const ull& p)
 {
-    Room::electricUnitPrice = p;
+    Room::electricUnitPrice100 = p;
+    Room::electricUnitPrice200 = Room::electricUnitPrice100 + 500;
+    Room::electricUnitPrice300 = Room::electricUnitPrice200 + 500;
 }
 void Room::SetWaterUnitPrice(const ull& p)
 {
@@ -334,7 +336,19 @@ void Room::CreateBill(const Month& month)
 
     bill.oldElectricIndex = this->oldElectricIndex;
     bill.newElectricIndex = this->newElectricIndex;
-    bill.electricCost = (bill.newElectricIndex - bill.oldElectricIndex) * Room::electricUnitPrice;
+    ull sodien = bill.newElectricIndex - bill.oldElectricIndex;
+    bill.electricCost = 0;
+    if(sodien <= 100) bill.electricCost += sodien * Room::electricUnitPrice100;
+    else {
+        bill.electricCost += 100 * Room::electricUnitPrice100;
+        sodien -= 100;
+        if(sodien <= 100) bill.electricCost += sodien * Room::electricUnitPrice200;
+        else {
+            bill.electricCost += 100 * Room::electricUnitPrice200;
+            sodien -= 100;
+            if(sodien > 100) bill.electricCost += sodien * Room::electricUnitPrice300;
+        }
+    }
 
     bill.oldWaterIndex = this->oldWaterIndex;
     bill.newWaterIndex = this->newWaterIndex;
